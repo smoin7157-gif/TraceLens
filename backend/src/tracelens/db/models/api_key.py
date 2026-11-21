@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,6 +12,7 @@ class ApiKey(Base, PrimaryKeyMixin, TimestampMixin):
     """Stores only hashed key material (raw secrets never persisted)."""
 
     __tablename__ = "api_keys"
+    __table_args__ = (Index("ix_api_keys_key_prefix", "key_prefix"),)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -23,3 +25,4 @@ class ApiKey(Base, PrimaryKeyMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     scopes: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     allowed_models: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

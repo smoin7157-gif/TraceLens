@@ -23,6 +23,7 @@ class Settings(BaseSettings):
         alias="DATABASE_URL",
     )
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
+    admin_api_token: str = Field(default="", alias="ADMIN_API_TOKEN")
 
     @property
     def is_production(self) -> bool:

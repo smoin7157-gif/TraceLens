@@ -6,7 +6,7 @@
 |-------|------|--------|-----------|
 | 1 | Foundation & local stack | ✅ Done | 2025-11-21 |
 | 2 | Data layer & tenant isolation | ✅ Done | 2025-11-21 |
-| 3 | API keys & auth pipeline stage | ⬜ Not started | — |
+| 3 | API keys & auth pipeline stage | ✅ Done | 2025-11-21 |
 | 4 | Pipeline framework & MOCK gateway | ⬜ Not started | — |
 | 5 | Multi-provider adapters & models | ⬜ Not started | — |
 | 6 | Streaming SSE | ⬜ Not started | — |
@@ -24,6 +24,28 @@
 ---
 
 ## Session log
+
+### Phase 3 — API keys & auth pipeline stage — 2025-11-21
+
+**Goal (3 lines):**
+- Admin API to create/list/revoke tenant API keys; only Argon2 hashes stored.
+- `AuthStage` resolves `Authorization: Bearer` to `tenant_id` + `key_id` on `GatewayContext`.
+- OpenAI-shaped 401 errors; `GET /v1/whoami` probe for verification.
+
+**Built:**
+- `security/keys.py`, `pipeline/stages/auth.py`, `api/admin_keys.py`, migration `002`.
+- `argon2-cffi` dependency; `ADMIN_API_TOKEN` for admin routes.
+
+**Verify:**
+- `pytest -q` (unit auth tests need no DB).
+- With Postgres: set `ADMIN_API_TOKEN`, migrate, integration test creates key → `/v1/whoami`.
+
+**Interview talking point:**
+- **Prefix + Argon2 verify** instead of storing plaintext or naive single-row lookup: prefix narrows candidates; Argon2 resists offline cracking if DB leaks; tradeoff is O(k) verifications per prefix collision (k tiny with 8-hex prefix).
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 2 — Data layer & tenant isolation — 2025-11-21
 
