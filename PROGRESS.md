@@ -5,7 +5,7 @@
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
 | 1 | Foundation & local stack | ✅ Done | 2025-11-21 |
-| 2 | Data layer & tenant isolation | ⬜ Not started | — |
+| 2 | Data layer & tenant isolation | ✅ Done | 2025-11-21 |
 | 3 | API keys & auth pipeline stage | ⬜ Not started | — |
 | 4 | Pipeline framework & MOCK gateway | ⬜ Not started | — |
 | 5 | Multi-provider adapters & models | ⬜ Not started | — |
@@ -25,32 +25,31 @@
 
 ## Session log
 
-### 2025-11-21 — STEP 0 (Plan only)
+### Phase 2 — Data layer & tenant isolation — 2025-11-21
 
-- Created `PLAN.md` (architecture, data model, folder structure, 14 phases, risks).
-- Created `PROGRESS.md` (this checklist).
-- Plan approved; Phase 1 started.
+**Goal (3 lines):**
+- SQLAlchemy 2 models for `tenants`, `api_keys`, `traces`, `spans` with Postgres + pgvector extension enabled.
+- Async engine/session helpers and Alembic migration `001`.
+- `TenantScopedRepository` plus Redis pool helper; isolation enforced in tests.
+
+**Built:**
+- `backend/src/tracelens/db/**` (models, session, redis_client, repositories).
+- `backend/alembic/versions/001_initial.py`, `tests/unit/test_tenant_isolation.py`, CI Postgres service.
+
+**Verify:**
+- Default: `cd backend && pytest -q` (unit tests; integration skipped).
+- With Postgres: `TRACELENS_INTEGRATION_TESTS=1` + `docker compose up postgres` → `pytest -q` (6 tests).
+
+**Interview talking point:**
+- **Repository-layer tenant scoping** vs RLS only: every query goes through `TenantScopedRepository` with mandatory `tenant_id` so bugs fail in Python tests without DB policy magic; tradeoff is you must route all data access through repos (discipline, not a silver bullet).
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅ (3 unit + 3 integration in CI)
+
+---
 
 ### Phase 1 — Foundation & local stack — 2025-11-21
 
-**Goal (3 lines):**
-- Bootstrap monorepo with Python 3.12 FastAPI app and typed settings.
-- Docker Compose for Postgres (pgvector), Redis, and API service.
-- CI via GitHub Actions: ruff, mypy, pytest.
-
-**Built:**
-- `docker-compose.yml`, `backend/Dockerfile`, `backend/pyproject.toml`, `tracelens` package with `GET /health`.
-- `.env.example`, `.gitignore`, root `README.md`, `.github/workflows/ci.yml`.
-- `backend/tests/test_health.py`.
-
-**Verify:**
-- `cd backend && pip install -e ".[dev]" && pytest -q`
-- `docker compose up --build` then `curl http://localhost:8000/health`
-
-**Interview talking point:**
-- **Pydantic Settings + `lru_cache` for config:** one immutable `Settings` instance per process avoids re-parsing env on every request; tradeoff is config is not hot-reloaded until later YAML phase (requires cache clear or worker restart).
-
-**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+(See prior entry in git history.)
 
 ---
 

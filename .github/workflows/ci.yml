@@ -13,6 +13,26 @@ defaults:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: tracelens
+          POSTGRES_PASSWORD: tracelens
+          POSTGRES_DB: tracelens
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tracelens -d tracelens"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://tracelens:tracelens@localhost:5432/tracelens
+      REDIS_URL: redis://localhost:6379/0
+      TRACELENS_INTEGRATION_TESTS: "1"
+
     steps:
       - uses: actions/checkout@v4
 

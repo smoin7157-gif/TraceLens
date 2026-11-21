@@ -36,6 +36,9 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "integration: requires Postgres (TRACELENS_INTEGRATION_TESTS=1)",
+]
 
 [tool.ruff]
 target-version = "py312"

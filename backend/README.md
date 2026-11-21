@@ -7,4 +7,9 @@ python -m venv .venv
 .venv\Scripts\activate   # Windows
 pip install -e ".[dev]"
 pytest
+
+# Integration tests (requires Postgres, e.g. docker compose up postgres)
+set TRACELENS_INTEGRATION_TESTS=1
+alembic upgrade head
+pytest -q -m integration
 ```
