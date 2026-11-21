@@ -30,8 +30,8 @@ This repo is being built in **14 incremental phases** with tests and CI per phas
 
 ```bash
 # Clone and enter the repo
-git clone https://github.com/smoin7157-gif/tracelens.git
-cd tracelens
+git clone https://github.com/smoin7157-gif/TraceLens.git
+cd TraceLens
 
 # Optional: copy env template
 cp .env.example .env
