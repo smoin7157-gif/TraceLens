@@ -10,6 +10,8 @@ from tracelens.security.keys import mask_api_key, parse_api_key, verify_api_key
 class AuthStage:
     """Pipeline stage 1: resolve Authorization bearer to tenant + key id."""
 
+    name = "auth"
+
     def __init__(self, session: AsyncSession) -> None:
         self._keys = ApiKeyAuthRepository(session)
 

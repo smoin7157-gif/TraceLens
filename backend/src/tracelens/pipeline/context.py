@@ -1,5 +1,8 @@
 import uuid
 from dataclasses import dataclass, field
+from typing import Any
+
+from tracelens.providers.schemas import ChatCompletionRequest, ChatCompletionResponse
 
 
 @dataclass
@@ -9,4 +12,8 @@ class GatewayContext:
     tenant_id: uuid.UUID | None = None
     key_id: uuid.UUID | None = None
     bearer_token: str | None = None
-    metadata: dict[str, str] = field(default_factory=dict)
+    request_id: str | None = None
+    chat_request: ChatCompletionRequest | None = None
+    chat_response: ChatCompletionResponse | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    stages_executed: list[str] = field(default_factory=list)

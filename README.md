@@ -15,7 +15,8 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 1 | Foundation & local stack | Done |
 | 2 | Data layer & tenant isolation | Done |
 | 3 | API keys & auth pipeline | Done |
-| 4–14 | See `PLAN.md` | Planned |
+| 4 | MOCK gateway + pipeline | Done |
+| 5–14 | See `PLAN.md` | Planned |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 

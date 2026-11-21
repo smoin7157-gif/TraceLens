@@ -7,7 +7,7 @@
 | 1 | Foundation & local stack | ✅ Done | 2025-11-21 |
 | 2 | Data layer & tenant isolation | ✅ Done | 2025-11-21 |
 | 3 | API keys & auth pipeline stage | ✅ Done | 2025-11-21 |
-| 4 | Pipeline framework & MOCK gateway | ⬜ Not started | — |
+| 4 | Pipeline framework & MOCK gateway | ✅ Done | 2025-11-21 |
 | 5 | Multi-provider adapters & models | ⬜ Not started | — |
 | 6 | Streaming SSE | ⬜ Not started | — |
 | 7 | Rate limits, validation, security scan | ⬜ Not started | — |
@@ -24,6 +24,27 @@
 ---
 
 ## Session log
+
+### Phase 4 — Pipeline framework & MOCK gateway — 2025-11-21
+
+**Goal (3 lines):**
+- Ordered toggleable `Pipeline` (`auth` → `provider` → `trace_enqueue`).
+- `POST /v1/chat/completions` for `mock-*` models; OpenAI-shaped JSON responses.
+- MOCK provider with latency/error-rate/429 simulation via headers + seeded RNG.
+
+**Built:**
+- `pipeline/executor.py`, `providers/mock.py`, `gateway/chat.py`, `observe/trace_queue.py` stub.
+
+**Verify:**
+- `pytest -q tests/unit/test_pipeline.py tests/unit/test_mock_provider.py`
+- With Postgres + API key: integration `test_chat_mock.py`.
+
+**Interview talking point:**
+- **Pipeline as explicit stage list + toggles** instead of deep middleware stacks: order is visible in code/tests, features disable without reorder bugs; tradeoff is more boilerplate per stage vs Django-style middleware magic.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 3 — API keys & auth pipeline stage — 2025-11-21
 

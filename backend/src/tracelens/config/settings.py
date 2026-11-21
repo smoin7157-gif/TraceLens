@@ -3,6 +3,8 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from tracelens.config.pipeline import PipelineToggles, default_pipeline_toggles
+
 
 class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
@@ -24,6 +26,9 @@ class Settings(BaseSettings):
     )
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
     admin_api_token: str = Field(default="", alias="ADMIN_API_TOKEN")
+    mock_default_latency_ms: float = Field(default=5.0, alias="MOCK_DEFAULT_LATENCY_MS")
+    mock_default_error_rate: float = Field(default=0.0, alias="MOCK_DEFAULT_ERROR_RATE")
+    pipeline: PipelineToggles = Field(default_factory=default_pipeline_toggles)
 
     @property
     def is_production(self) -> bool:

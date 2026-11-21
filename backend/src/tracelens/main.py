@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from tracelens import __version__
 from tracelens.api import admin_keys, gateway_probe
 from tracelens.config import get_settings
+from tracelens.gateway import chat
 from tracelens.gateway.errors import GatewayAuthError, openai_error_body
 
 settings = get_settings()
@@ -18,6 +19,7 @@ app = FastAPI(
 
 app.include_router(admin_keys.router)
 app.include_router(gateway_probe.router)
+app.include_router(chat.router)
 
 
 @app.exception_handler(GatewayAuthError)
