@@ -1,9 +1,11 @@
 import time
+from collections.abc import AsyncIterator
 from typing import Any
 
 import httpx
 
 from tracelens.config import get_settings
+from tracelens.providers.chunk_stream import stream_text_as_openai_chunks
 from tracelens.providers.errors import raise_from_http_response
 from tracelens.providers.schemas import (
     ChatCompletionChoice,
@@ -85,6 +87,26 @@ class AnthropicProvider:
         finally:
             if owns_client:
                 await client.aclose()
+
+    async def chat_completion_stream(
+        self,
+        request: ChatCompletionRequest,
+        *,
+        completion_id: str | None = None,
+        client: httpx.AsyncClient | None = None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        response = await self.chat_completion(
+            request,
+            completion_id=completion_id,
+            client=client,
+        )
+        stream_id = completion_id or response.id
+        async for chunk in stream_text_as_openai_chunks(
+            request,
+            completion_id=stream_id,
+            full_text=response.choices[0].message.content,
+        ):
+            yield chunk
 
     def static_models(self) -> list[dict[str, str]]:
         return [

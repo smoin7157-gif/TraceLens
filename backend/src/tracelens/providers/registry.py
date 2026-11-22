@@ -1,3 +1,6 @@
+from collections.abc import AsyncIterator
+from typing import Any
+
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +21,18 @@ class ProviderRegistry:
 
     def kind_for_model(self, model: str) -> ProviderKind:
         return resolve_provider_for_model(model)
+
+    async def ensure_provider_ready(self, model: str) -> ProviderKind:
+        kind = self.kind_for_model(model)
+        if kind == "mock":
+            return kind
+        api_key = await resolve_api_key(self._session, kind)
+        if not api_key:
+            raise GatewayValidationError(
+                f"Provider `{kind}` is not configured for this installation.",
+                code="provider_not_configured",
+            )
+        return kind
 
     async def chat_completion(
         self,
@@ -58,3 +73,53 @@ class ProviderRegistry:
             f"The model `{request.model}` does not exist or you do not have access to it.",
             code="model_not_found",
         )
+
+    def chat_completion_stream(
+        self,
+        request: ChatCompletionRequest,
+        *,
+        http_request: Request | None,
+        completion_id: str | None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        kind = self.kind_for_model(request.model)
+        if kind == "mock":
+            return self._mock.chat_completion_stream(
+                request,
+                http_request=http_request,
+                completion_id=completion_id,
+            )
+
+        async def _stream() -> AsyncIterator[dict[str, Any]]:
+            key = await resolve_api_key(self._session, kind)
+            if not key:
+                raise GatewayValidationError(
+                    f"Provider `{kind}` is not configured for this installation.",
+                    code="provider_not_configured",
+                )
+            if kind == "openai":
+                async for chunk in OpenAIProvider(key).chat_completion_stream(
+                    request,
+                    completion_id=completion_id,
+                ):
+                    yield chunk
+                return
+            if kind == "anthropic":
+                async for chunk in AnthropicProvider(key).chat_completion_stream(
+                    request,
+                    completion_id=completion_id,
+                ):
+                    yield chunk
+                return
+            if kind == "gemini":
+                async for chunk in GeminiProvider(key).chat_completion_stream(
+                    request,
+                    completion_id=completion_id,
+                ):
+                    yield chunk
+                return
+            raise GatewayValidationError(
+                f"The model `{request.model}` does not exist or you do not have access to it.",
+                code="model_not_found",
+            )
+
+        return _stream()

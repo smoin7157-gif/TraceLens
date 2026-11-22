@@ -16,8 +16,17 @@ class Pipeline:
         self._stages = stages
         self._toggles = toggles
 
-    async def run(self, request: Request, context: GatewayContext) -> None:
+    async def run(
+        self,
+        request: Request,
+        context: GatewayContext,
+        *,
+        skip: set[str] | None = None,
+    ) -> None:
+        skip = skip or set()
         for stage in self._stages:
+            if stage.name in skip:
+                continue
             if not self._toggles.get(stage.name, True):
                 continue
             await stage.run(request, context)

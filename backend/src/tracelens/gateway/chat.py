@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import ValidationError
 
 from tracelens.api.deps import SessionDep
@@ -11,6 +11,7 @@ from tracelens.gateway.errors import (
     ProviderError,
     openai_error_body,
 )
+from tracelens.gateway.streaming import stream_chat_response
 from tracelens.pipeline.context import GatewayContext
 from tracelens.pipeline.executor import build_chat_pipeline
 from tracelens.providers.schemas import ChatCompletionRequest
@@ -18,8 +19,8 @@ from tracelens.providers.schemas import ChatCompletionRequest
 router = APIRouter(tags=["gateway"])
 
 
-@router.post("/v1/chat/completions")
-async def chat_completions(request: Request, session: SessionDep) -> JSONResponse:
+@router.post("/v1/chat/completions", response_model=None)
+async def chat_completions(request: Request, session: SessionDep) -> Response:
     try:
         payload = await request.json()
         chat_request = ChatCompletionRequest.model_validate(payload)
@@ -29,23 +30,17 @@ async def chat_completions(request: Request, session: SessionDep) -> JSONRespons
             content=_validation_error_body(exc),
         )
 
-    if chat_request.stream:
-        return JSONResponse(
-            status_code=400,
-            content=openai_error_body(
-                "Streaming is not supported yet (phase 6). Set stream=false.",
-                code="stream_not_supported",
-            ),
-        )
-
     context = GatewayContext(
         request_id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
         chat_request=chat_request,
     )
 
+    pipeline = build_chat_pipeline(session)
+    stream_mode = chat_request.stream
+    skip_trace = {"trace_enqueue"} if stream_mode else None
+
     try:
-        pipeline = build_chat_pipeline(session)
-        await pipeline.run(request, context)
+        await pipeline.run(request, context, skip=skip_trace)
     except GatewayAuthError as exc:
         return JSONResponse(status_code=401, content=openai_error_body(exc.message, code=exc.code))
     except GatewayValidationError as exc:
@@ -61,6 +56,26 @@ async def chat_completions(request: Request, session: SessionDep) -> JSONRespons
                 code=exc.code,
                 error_type=exc.error_type,
             ),
+        )
+
+    if stream_mode:
+        if context.stream_chunks is None:
+            return JSONResponse(
+                status_code=500,
+                content=openai_error_body(
+                    "Streaming source missing",
+                    code="server_error",
+                    error_type="server_error",
+                ),
+            )
+        return StreamingResponse(
+            stream_chat_response(request, context, context.stream_chunks),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
         )
 
     if context.chat_response is None:

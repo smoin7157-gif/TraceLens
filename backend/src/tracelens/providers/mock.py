@@ -2,11 +2,14 @@ import asyncio
 import random
 import time
 import uuid
+from collections.abc import AsyncIterator
+from typing import Any
 
 from fastapi import Request
 
 from tracelens.config import get_settings
 from tracelens.gateway.errors import ProviderError
+from tracelens.providers.chunk_stream import stream_text_as_openai_chunks
 from tracelens.providers.schemas import (
     ChatCompletionChoice,
     ChatCompletionRequest,
@@ -92,3 +95,27 @@ class MockProvider:
                 total_tokens=prompt_tokens + completion_tokens,
             ),
         )
+
+    async def chat_completion_stream(
+        self,
+        request: ChatCompletionRequest,
+        *,
+        http_request: Request | None = None,
+        completion_id: str | None = None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        response = await self.chat_completion(
+            request,
+            http_request=http_request,
+            completion_id=completion_id,
+        )
+        text = response.choices[0].message.content
+        stream_id = completion_id or response.id
+        async for chunk in stream_text_as_openai_chunks(
+            request,
+            completion_id=stream_id,
+            full_text=text,
+        ):
+            if http_request is not None and await http_request.is_disconnected():
+                break
+            yield chunk
+            await asyncio.sleep(0)

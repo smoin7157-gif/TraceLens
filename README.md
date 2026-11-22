@@ -17,7 +17,8 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 3 | API keys & auth pipeline | Done |
 | 4 | MOCK gateway + pipeline | Done |
 | 5 | OpenAI / Anthropic / Gemini + /v1/models | Done |
-| 6–14 | See `PLAN.md` | Planned |
+| 6 | Streaming SSE (`stream: true`) | Done |
+| 7–14 | See `PLAN.md` | Planned |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 

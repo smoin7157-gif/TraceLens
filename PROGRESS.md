@@ -9,7 +9,7 @@
 | 3 | API keys & auth pipeline stage | ✅ Done | 2025-11-21 |
 | 4 | Pipeline framework & MOCK gateway | ✅ Done | 2025-11-21 |
 | 5 | Multi-provider adapters & models | ✅ Done | 2025-11-22 |
-| 6 | Streaming SSE | ⬜ Not started | — |
+| 6 | Streaming SSE | ✅ Done | 2025-11-22 |
 | 7 | Rate limits, validation, security scan | ⬜ Not started | — |
 | 8 | Health, breaker, retries, fallback | ⬜ Not started | — |
 | 9 | Budgets & economics row | ⬜ Not started | — |
@@ -24,6 +24,27 @@
 ---
 
 ## Session log
+
+### Phase 6 — Streaming SSE — 2025-11-22
+
+**Goal (3 lines):**
+- `stream: true` returns OpenAI-style SSE (`chat.completion.chunk` + `data: [DONE]`).
+- MOCK + OpenAI passthrough streaming; Anthropic/Gemini chunked via normalized adapter.
+- Client disconnect stops emission; trace enqueue runs after stream completes.
+
+**Built:**
+- `gateway/streaming.py`, stream path in `gateway/chat.py`, provider stream methods, retry placeholder.
+
+**Verify:**
+- `pytest -q tests/unit/test_streaming.py tests/unit/test_openai_stream.py`
+- Integration: `test_chat_stream.py` with API key + `stream: true`
+
+**Interview talking point:**
+- **Defer `trace_enqueue` until after SSE completes**: logging must not block first token, but you still want one enqueue per request — run trace stage in the generator `finally` block; tradeoff is slightly more complex control flow vs duplicating trace logic outside the pipeline.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 5 — Multi-provider adapters & models — 2025-11-22
 

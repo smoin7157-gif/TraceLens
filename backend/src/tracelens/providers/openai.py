@@ -1,4 +1,6 @@
+import json
 import time
+from collections.abc import AsyncIterator
 from typing import Any, Literal
 
 import httpx
@@ -80,6 +82,49 @@ class OpenAIProvider:
             if response.status_code >= 400:
                 raise_from_http_response(response)
             return _map_completion(response.json(), request.model, completion_id)
+        finally:
+            if owns_client:
+                await client.aclose()
+
+    async def chat_completion_stream(
+        self,
+        request: ChatCompletionRequest,
+        *,
+        completion_id: str | None = None,
+        client: httpx.AsyncClient | None = None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        owns_client = client is None
+        client = client or httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=10.0))
+        try:
+            payload: dict[str, Any] = {
+                "model": request.model,
+                "messages": [m.model_dump() for m in request.messages],
+                "stream": True,
+            }
+            if request.temperature is not None:
+                payload["temperature"] = request.temperature
+            if request.max_tokens is not None:
+                payload["max_tokens"] = request.max_tokens
+
+            async with client.stream(
+                "POST",
+                f"{self._base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {self._api_key}"},
+                json=payload,
+            ) as response:
+                if response.status_code >= 400:
+                    await response.aread()
+                    raise_from_http_response(response)
+                async for line in response.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data = line.removeprefix("data: ").strip()
+                    if not data or data == "[DONE]":
+                        break
+                    chunk = json.loads(data)
+                    if completion_id:
+                        chunk["id"] = completion_id
+                    yield chunk
         finally:
             if owns_client:
                 await client.aclose()
