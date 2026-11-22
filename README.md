@@ -23,7 +23,8 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 9 | Budgets, request economics log, spend webhooks | Done |
 | 10 | Caching, prompt compression, cost savings | Done |
 | 11 | Traces, Prometheus metrics, Python SDK | Done |
-| 12–14 | See `PLAN.md` | Planned |
+| 12 | Prompts, datasets, experiments, evaluators, alerts | Done |
+| 13–14 | See `PLAN.md` | Planned |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 

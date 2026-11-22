@@ -16,6 +16,8 @@ def fallback_chain_for_model(model: str) -> list[str]:
 def rank_models_by_health(
     models: list[str],
     stats_by_model: dict[str, dict[str, float | int]],
+    *,
+    quality_by_model: dict[str, float] | None = None,
 ) -> list[str]:
     """Order models by weighted health score (lower is better)."""
     settings = get_settings()
@@ -26,7 +28,7 @@ def rank_models_by_health(
         p95 = float(stats.get("p95_latency_ms", 50.0))
         error_rate = float(stats.get("error_rate", 0.0))
         cost = 1.0 if model.startswith("mock-") else 2.0
-        quality = 0.8
+        quality = float(quality_by_model.get(model, 0.8) if quality_by_model else 0.8)
         return (
             weights.weight_latency * p95
             + weights.weight_error * (error_rate * 1000.0)
@@ -40,14 +42,21 @@ def rank_models_by_health(
 def build_routing_plan(
     requested_model: str,
     stats_by_model: dict[str, dict[str, float | int]],
+    *,
+    quality_by_model: dict[str, float] | None = None,
 ) -> tuple[list[str], dict[str, Any]]:
     candidates = fallback_chain_for_model(requested_model)
-    ordered = rank_models_by_health(candidates, stats_by_model)
+    ordered = rank_models_by_health(candidates, stats_by_model, quality_by_model=quality_by_model)
+    quality_scores = (
+        {m: quality_by_model[m] for m in candidates if m in quality_by_model}
+        if quality_by_model
+        else {}
+    )
     explanation = {
         "requested_model": requested_model,
         "candidates": candidates,
         "ordered_by_health": ordered,
-        "eval_quality_score": None,
+        "eval_quality_score": quality_scores or None,
         "weights": get_settings().routing.model_dump(
             include={"weight_latency", "weight_error", "weight_cost", "weight_quality"}
         ),

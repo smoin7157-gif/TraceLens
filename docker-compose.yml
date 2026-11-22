@@ -44,6 +44,24 @@ services:
       redis:
         condition: service_healthy
 
+  eval-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python -m tracelens.workers.eval_worker
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+asyncpg://tracelens:tracelens@postgres:5432/tracelens
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   trace-worker:
     build:
       context: ./backend

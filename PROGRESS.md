@@ -15,7 +15,7 @@
 | 9 | Budgets & economics row | ✅ Done | 2025-11-22 |
 | 10 | Caching & cost optimization | ✅ Done | 2025-11-22 |
 | 11 | Observability core & Python SDK | ✅ Done | 2025-11-22 |
-| 12 | Prompts, datasets, evaluators, alerts | ⬜ Not started | — |
+| 12 | Prompts, datasets, evaluators, alerts | ✅ Done | 2025-11-22 |
 | 13 | Dashboard (Next.js) | ⬜ Not started | — |
 | 14 | Differentiators, dogfooding, proof & docs | ⬜ Not started | — |
 
@@ -24,6 +24,26 @@
 ---
 
 ## Session log
+
+### Phase 12 — Prompts, datasets, experiments, evaluators, alerts — 2025-11-22
+
+**Goal (3 lines):**
+- Versioned prompts with compare API + rolling eval metrics.
+- Datasets from `requests_log`; experiment runner with side-by-side variant scores.
+- Async eval worker (regex/JSON schema); alerts with webhooks; eval scores feed router.
+
+**Built:**
+- Migration `006`, `observe/*`, `workers/eval_worker.py`, admin observe APIs, `eval-worker` compose.
+
+**Verify:**
+- `pytest -q tests/unit/test_evaluators.py tests/unit/test_routing_quality.py tests/integration/test_experiment_flow.py`
+
+**Interview talking point:**
+- **Eval scores in Redis for routing**: batch eval writes `tl:quality:{tenant}:{model}` so the router weights quality without blocking chat; tradeoff is eventually-consistent scores until the worker runs.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 11 — Observability core & Python SDK — 2025-11-22
 

@@ -3,6 +3,7 @@ from fastapi import Request
 from tracelens.config import get_settings
 from tracelens.db.redis_client import RedisClient
 from tracelens.gateway.errors import GatewayValidationError
+from tracelens.observe.quality_scores import get_quality_scores
 from tracelens.optimize.routing import (
     apply_safe_downgrade,
     build_routing_plan,
@@ -50,7 +51,14 @@ class RouterStage:
                     "sample_count": 0,
                 }
 
-        ordered, explanation = build_routing_plan(requested, stats_by_model)
+        quality_by_model: dict[str, float] = {}
+        if context.tenant_id is not None:
+            quality_by_model = await get_quality_scores(redis, context.tenant_id, chain_models)
+        ordered, explanation = build_routing_plan(
+            requested,
+            stats_by_model,
+            quality_by_model=quality_by_model,
+        )
         reordered, downgrade_tags = apply_safe_downgrade(
             ordered,
             requested,
