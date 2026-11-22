@@ -8,7 +8,7 @@
 | 2 | Data layer & tenant isolation | ✅ Done | 2025-11-21 |
 | 3 | API keys & auth pipeline stage | ✅ Done | 2025-11-21 |
 | 4 | Pipeline framework & MOCK gateway | ✅ Done | 2025-11-21 |
-| 5 | Multi-provider adapters & models | ⬜ Not started | — |
+| 5 | Multi-provider adapters & models | ✅ Done | 2025-11-22 |
 | 6 | Streaming SSE | ⬜ Not started | — |
 | 7 | Rate limits, validation, security scan | ⬜ Not started | — |
 | 8 | Health, breaker, retries, fallback | ⬜ Not started | — |
@@ -24,6 +24,27 @@
 ---
 
 ## Session log
+
+### Phase 5 — Multi-provider adapters & models — 2025-11-22
+
+**Goal (3 lines):**
+- OpenAI, Anthropic, and Gemini adapters normalize to internal `ChatCompletionResponse`.
+- `GET /v1/models` lists mock + configured providers; chat routes by model prefix.
+- Fernet-encrypted credentials in `providers` table with env key fallback.
+
+**Built:**
+- `providers/openai.py`, `anthropic.py`, `gemini.py`, `registry.py`, `gateway/models.py`, migration `003`.
+
+**Verify:**
+- `pytest -q tests/unit/test_provider_adapters.py` (respx mocks).
+- Set `OPENAI_API_KEY` locally for live calls (optional).
+
+**Interview talking point:**
+- **Env keys for dev, encrypted DB for prod**: operators bootstrap with `.env`; production stores Fernet blobs so a DB leak doesn’t expose plaintext vendor keys — tradeoff is you must manage `MASTER_ENCRYPTION_KEY` rotation carefully.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 4 — Pipeline framework & MOCK gateway — 2025-11-21
 

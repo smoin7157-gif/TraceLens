@@ -29,6 +29,18 @@ class Settings(BaseSettings):
     mock_default_latency_ms: float = Field(default=5.0, alias="MOCK_DEFAULT_LATENCY_MS")
     mock_default_error_rate: float = Field(default=0.0, alias="MOCK_DEFAULT_ERROR_RATE")
     pipeline: PipelineToggles = Field(default_factory=default_pipeline_toggles)
+    master_encryption_key: str = Field(default="", alias="MASTER_ENCRYPTION_KEY")
+    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
+    google_api_key: str = Field(default="", alias="GOOGLE_API_KEY")
+    openai_base_url: str = Field(default="https://api.openai.com/v1", alias="OPENAI_BASE_URL")
+    anthropic_base_url: str = Field(
+        default="https://api.anthropic.com/v1", alias="ANTHROPIC_BASE_URL"
+    )
+    google_base_url: str = Field(
+        default="https://generativelanguage.googleapis.com/v1beta",
+        alias="GOOGLE_BASE_URL",
+    )
 
     @property
     def is_production(self) -> bool:
