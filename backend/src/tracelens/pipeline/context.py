@@ -17,5 +17,7 @@ class GatewayContext:
     chat_request: ChatCompletionRequest | None = None
     chat_response: ChatCompletionResponse | None = None
     stream_chunks: AsyncIterator[dict[str, Any]] | None = None
+    allowed_models: list[str] = field(default_factory=list)
+    client_ip: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     stages_executed: list[str] = field(default_factory=list)

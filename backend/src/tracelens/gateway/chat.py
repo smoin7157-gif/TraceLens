@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from tracelens.api.deps import SessionDep
 from tracelens.gateway.errors import (
     GatewayAuthError,
+    GatewayRateLimitError,
     GatewayValidationError,
     ProviderError,
     openai_error_body,
@@ -43,6 +44,15 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
         await pipeline.run(request, context, skip=skip_trace)
     except GatewayAuthError as exc:
         return JSONResponse(status_code=401, content=openai_error_body(exc.message, code=exc.code))
+    except GatewayRateLimitError as exc:
+        return JSONResponse(
+            status_code=429,
+            content=openai_error_body(
+                exc.message,
+                code=exc.code,
+                error_type="rate_limit_error",
+            ),
+        )
     except GatewayValidationError as exc:
         return JSONResponse(
             status_code=400,

@@ -49,5 +49,12 @@ async def test_chat_completions_mock_end_to_end(
         payload = chat_resp.json()
         assert payload["object"] == "chat.completion"
         assert payload["tracelens"]["tenant_id"] == str(tenant.id)
-        assert payload["tracelens"]["stages"] == ["auth", "provider", "trace_enqueue"]
+        assert payload["tracelens"]["stages"] == [
+            "auth",
+            "rate_limit",
+            "validation",
+            "security_scan",
+            "provider",
+            "trace_enqueue",
+        ]
         assert "Hello TraceLens" in payload["choices"][0]["message"]["content"]

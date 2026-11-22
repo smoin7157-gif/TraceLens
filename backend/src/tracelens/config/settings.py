@@ -4,6 +4,13 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from tracelens.config.pipeline import PipelineToggles, default_pipeline_toggles
+from tracelens.config.security import (
+    InjectionAction,
+    PiiMode,
+    RateLimitPolicy,
+    SecurityPolicy,
+    ValidationPolicy,
+)
 
 
 class Settings(BaseSettings):
@@ -41,6 +48,11 @@ class Settings(BaseSettings):
         default="https://generativelanguage.googleapis.com/v1beta",
         alias="GOOGLE_BASE_URL",
     )
+    rate_limit: RateLimitPolicy = Field(default_factory=RateLimitPolicy)
+    validation: ValidationPolicy = Field(default_factory=ValidationPolicy)
+    security_policy: SecurityPolicy = Field(default_factory=SecurityPolicy)
+    pii_mode: PiiMode = Field(default="block", alias="PII_MODE")
+    injection_action: InjectionAction = Field(default="block", alias="INJECTION_ACTION")
 
     @property
     def is_production(self) -> bool:

@@ -31,6 +31,13 @@ class GatewayValidationError(Exception):
         self.code = code
 
 
+class GatewayRateLimitError(Exception):
+    def __init__(self, message: str, *, code: str = "rate_limit_exceeded") -> None:
+        super().__init__(message)
+        self.message = message
+        self.code = code
+
+
 def openai_error_body(
     message: str,
     *,

@@ -10,7 +10,7 @@
 | 4 | Pipeline framework & MOCK gateway | ✅ Done | 2025-11-21 |
 | 5 | Multi-provider adapters & models | ✅ Done | 2025-11-22 |
 | 6 | Streaming SSE | ✅ Done | 2025-11-22 |
-| 7 | Rate limits, validation, security scan | ⬜ Not started | — |
+| 7 | Rate limits, validation, security scan | ✅ Done | 2025-11-22 |
 | 8 | Health, breaker, retries, fallback | ⬜ Not started | — |
 | 9 | Budgets & economics row | ⬜ Not started | — |
 | 10 | Caching & cost optimization | ⬜ Not started | — |
@@ -24,6 +24,27 @@
 ---
 
 ## Session log
+
+### Phase 7 — Rate limits, validation, security — 2025-11-22
+
+**Goal (3 lines):**
+- Redis sliding-window limits per API key + per IP (tenant-scoped keys).
+- Request validation: payload size, max_tokens cap, per-key model allow-list.
+- Injection heuristics + PII block/redact/log-only with fail-open/closed policy.
+
+**Built:**
+- `security/rate_limit.py`, `validation.py`, `injection.py`, `pii.py` + pipeline stages.
+- OpenAI-style 429 for rate limits; CI Redis service.
+
+**Verify:**
+- `pytest -q tests/unit/test_rate_limit.py tests/unit/test_security_scan.py tests/unit/test_validation_stage.py`
+
+**Interview talking point:**
+- **Tenant-prefixed Redis keys** (`tl:rl:tenant:{id}:...`) so limiter state never shares namespaces across tenants even if key IDs collide in tests; tradeoff is slightly longer keys vs accidental cross-tenant coupling.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 6 — Streaming SSE — 2025-11-22
 

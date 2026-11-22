@@ -6,7 +6,10 @@ from tracelens.pipeline.context import GatewayContext
 from tracelens.pipeline.stages.auth import AuthStage
 from tracelens.pipeline.stages.base import PipelineStage
 from tracelens.pipeline.stages.provider import ProviderStage
+from tracelens.pipeline.stages.rate_limit import RateLimitStage
+from tracelens.pipeline.stages.security_scan import SecurityScanStage
 from tracelens.pipeline.stages.trace_enqueue import TraceEnqueueStage
+from tracelens.pipeline.stages.validation import ValidationStage
 
 
 class Pipeline:
@@ -38,6 +41,9 @@ def build_chat_pipeline(session: AsyncSession) -> Pipeline:
     toggles = settings.pipeline.model_dump()
     stages: list[PipelineStage] = [
         AuthStage(session),
+        RateLimitStage(),
+        ValidationStage(),
+        SecurityScanStage(),
         ProviderStage(session),
         TraceEnqueueStage(),
     ]

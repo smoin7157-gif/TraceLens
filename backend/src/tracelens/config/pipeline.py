@@ -5,6 +5,9 @@ class PipelineToggles(BaseModel):
     """Per-stage enable flags (phase 4 defaults; more stages added later)."""
 
     auth: bool = True
+    rate_limit: bool = True
+    validation: bool = True
+    security_scan: bool = True
     provider: bool = True
     trace_enqueue: bool = True
 
