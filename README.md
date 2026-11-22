@@ -20,7 +20,8 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 6 | Streaming SSE (`stream: true`) | Done |
 | 7 | Rate limits, validation, security scan | Done |
 | 8 | Health, circuit breaker, retries, fallback routing | Done |
-| 9–14 | See `PLAN.md` | Planned |
+| 9 | Budgets, request economics log, spend webhooks | Done |
+| 10–14 | See `PLAN.md` | Planned |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 

@@ -25,4 +25,10 @@ class ApiKey(Base, PrimaryKeyMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     scopes: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     allowed_models: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    budget_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("budgets.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

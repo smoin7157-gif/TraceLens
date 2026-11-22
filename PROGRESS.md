@@ -12,7 +12,7 @@
 | 6 | Streaming SSE | ✅ Done | 2025-11-22 |
 | 7 | Rate limits, validation, security scan | ✅ Done | 2025-11-22 |
 | 8 | Health, breaker, retries, fallback | ✅ Done | 2025-11-22 |
-| 9 | Budgets & economics row | ⬜ Not started | — |
+| 9 | Budgets & economics row | ✅ Done | 2025-11-22 |
 | 10 | Caching & cost optimization | ⬜ Not started | — |
 | 11 | Observability core & Python SDK | ⬜ Not started | — |
 | 12 | Prompts, datasets, evaluators, alerts | ⬜ Not started | — |
@@ -24,6 +24,27 @@
 ---
 
 ## Session log
+
+### Phase 9 — Budgets & economics row — 2025-11-22
+
+**Goal (3 lines):**
+- Per-key daily/monthly token (and USD) caps in Redis with PG `budgets` + `requests_log`.
+- Hard stop before provider (`insufficient_quota`); 80% threshold webhooks (deduped).
+- Economics skeleton persisted on every completed gateway call (costs `0` until phase 10).
+
+**Built:**
+- `security/budgets.py`, `observe/request_log.py`, `pipeline/stages/budget.py`, `request_log.py`.
+- Migration `004` (`budgets`, `requests_log`, `api_keys.budget_id`); admin budget APIs.
+
+**Verify:**
+- `pytest -q tests/unit/test_budget_counters.py tests/unit/test_request_log_economics.py`
+
+**Interview talking point:**
+- **Redis counters for speed, PG rows for audit**: hot path only does O(1) INCRBY; durable economics live in `requests_log` for later cache/savings math; tradeoff is dual writes until reconcile job (stubbed) lands.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 8 — Health, circuit breaker, retries, fallback — 2025-11-22
 

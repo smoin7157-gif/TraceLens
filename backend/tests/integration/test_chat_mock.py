@@ -54,8 +54,10 @@ async def test_chat_completions_mock_end_to_end(
             "rate_limit",
             "validation",
             "security_scan",
+            "budget",
             "router",
             "provider",
+            "request_log",
             "trace_enqueue",
         ]
         assert "Hello TraceLens" in payload["choices"][0]["message"]["content"]

@@ -5,8 +5,10 @@ from tracelens.config import get_settings
 from tracelens.pipeline.context import GatewayContext
 from tracelens.pipeline.stages.auth import AuthStage
 from tracelens.pipeline.stages.base import PipelineStage
+from tracelens.pipeline.stages.budget import BudgetStage
 from tracelens.pipeline.stages.provider_call import ProviderCallStage
 from tracelens.pipeline.stages.rate_limit import RateLimitStage
+from tracelens.pipeline.stages.request_log import RequestLogStage
 from tracelens.pipeline.stages.router import RouterStage
 from tracelens.pipeline.stages.security_scan import SecurityScanStage
 from tracelens.pipeline.stages.trace_enqueue import TraceEnqueueStage
@@ -45,8 +47,10 @@ def build_chat_pipeline(session: AsyncSession) -> Pipeline:
         RateLimitStage(),
         ValidationStage(),
         SecurityScanStage(),
+        BudgetStage(session),
         RouterStage(),
         ProviderCallStage(session),
+        RequestLogStage(session),
         TraceEnqueueStage(),
     ]
     return Pipeline(stages=stages, toggles=toggles)

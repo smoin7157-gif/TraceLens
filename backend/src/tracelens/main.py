@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from tracelens import __version__
-from tracelens.api import admin_keys, gateway_probe
+from tracelens.api import admin_budgets, admin_keys, gateway_probe
 from tracelens.config import get_settings
 from tracelens.gateway import chat, models
 from tracelens.gateway import health as provider_health
@@ -19,6 +19,7 @@ app = FastAPI(
 )
 
 app.include_router(admin_keys.router)
+app.include_router(admin_budgets.router)
 app.include_router(gateway_probe.router)
 app.include_router(chat.router)
 app.include_router(models.router)

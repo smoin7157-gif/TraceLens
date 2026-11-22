@@ -46,6 +46,7 @@ class AuthStage:
             if verify_api_key(normalized, candidate.key_hash):
                 context.tenant_id = candidate.tenant_id
                 context.key_id = candidate.id
+                context.budget_id = candidate.budget_id
                 context.allowed_models = list(candidate.allowed_models or [])
                 if request.client is not None:
                     context.client_ip = request.client.host

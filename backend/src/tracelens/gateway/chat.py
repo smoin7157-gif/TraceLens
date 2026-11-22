@@ -7,12 +7,14 @@ from pydantic import ValidationError
 from tracelens.api.deps import SessionDep
 from tracelens.gateway.errors import (
     GatewayAuthError,
+    GatewayBudgetError,
     GatewayRateLimitError,
     GatewayValidationError,
     ProviderError,
     openai_error_body,
 )
 from tracelens.gateway.streaming import stream_chat_response
+from tracelens.observe.request_log import persist_request_log
 from tracelens.pipeline.context import GatewayContext
 from tracelens.pipeline.executor import build_chat_pipeline
 from tracelens.providers.schemas import ChatCompletionRequest
@@ -38,10 +40,10 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
 
     pipeline = build_chat_pipeline(session)
     stream_mode = chat_request.stream
-    skip_trace = {"trace_enqueue"} if stream_mode else None
+    skip_end_stages = {"trace_enqueue", "request_log"} if stream_mode else None
 
     try:
-        await pipeline.run(request, context, skip=skip_trace)
+        await pipeline.run(request, context, skip=skip_end_stages)
     except GatewayAuthError as exc:
         return JSONResponse(status_code=401, content=openai_error_body(exc.message, code=exc.code))
     except GatewayRateLimitError as exc:
@@ -51,6 +53,21 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
                 exc.message,
                 code=exc.code,
                 error_type="rate_limit_error",
+            ),
+        )
+    except GatewayBudgetError as exc:
+        await persist_request_log(
+            session,
+            context,
+            status="budget_exceeded",
+            record_budget_usage=False,
+        )
+        return JSONResponse(
+            status_code=429,
+            content=openai_error_body(
+                exc.message,
+                code=exc.code,
+                error_type="insufficient_quota",
             ),
         )
     except GatewayValidationError as exc:
@@ -79,7 +96,7 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
                 ),
             )
         return StreamingResponse(
-            stream_chat_response(request, context, context.stream_chunks),
+            stream_chat_response(request, context, context.stream_chunks, session=session),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",

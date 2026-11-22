@@ -40,6 +40,28 @@ class GatewayRateLimitError(Exception):
         self.code = code
 
 
+class GatewayBudgetError(Exception):
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "insufficient_quota",
+        limit: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.message = message
+        self.code = code
+        self.limit = limit
+
+
+OPENAI_ERROR_MAP: dict[type[Exception], tuple[int, str, str]] = {
+    GatewayAuthError: (401, "invalid_api_key", "invalid_request_error"),
+    GatewayRateLimitError: (429, "rate_limit_exceeded", "rate_limit_error"),
+    GatewayBudgetError: (429, "insufficient_quota", "insufficient_quota"),
+    GatewayValidationError: (400, "invalid_request_error", "invalid_request_error"),
+}
+
+
 def openai_error_body(
     message: str,
     *,

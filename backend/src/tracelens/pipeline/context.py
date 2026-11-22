@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from tracelens.providers.schemas import ChatCompletionRequest, ChatCompletionResponse
+from tracelens.security.budgets import UsageSnapshot
 
 
 @dataclass
@@ -12,6 +13,9 @@ class GatewayContext:
 
     tenant_id: uuid.UUID | None = None
     key_id: uuid.UUID | None = None
+    budget_id: uuid.UUID | None = None
+    budget_snapshot: UsageSnapshot | None = None
+    request_log_id: uuid.UUID | None = None
     bearer_token: str | None = None
     request_id: str | None = None
     chat_request: ChatCompletionRequest | None = None

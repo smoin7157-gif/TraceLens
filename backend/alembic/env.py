@@ -8,7 +8,15 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from tracelens.config import get_settings
 from tracelens.db.base import Base
-from tracelens.db.models import ApiKey, Provider, Span, Tenant, Trace  # noqa: F401
+from tracelens.db.models import (  # noqa: F401
+    ApiKey,
+    Budget,
+    Provider,
+    RequestLog,
+    Span,
+    Tenant,
+    Trace,
+)
 
 config = context.config
 
