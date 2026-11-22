@@ -22,7 +22,8 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 8 | Health, circuit breaker, retries, fallback routing | Done |
 | 9 | Budgets, request economics log, spend webhooks | Done |
 | 10 | Caching, prompt compression, cost savings | Done |
-| 11–14 | See `PLAN.md` | Planned |
+| 11 | Traces, Prometheus metrics, Python SDK | Done |
+| 12–14 | See `PLAN.md` | Planned |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 
@@ -54,6 +55,7 @@ Health check:
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/health/providers
+curl http://localhost:8000/metrics
 ```
 
 Expected JSON includes `"status": "ok"` and the API version. `/health/providers` lists circuit state and rolling latency/error stats per configured model.

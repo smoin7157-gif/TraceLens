@@ -7,6 +7,6 @@ from tracelens.pipeline.context import GatewayContext
 class TraceEnqueueStage:
     name = "trace_enqueue"
 
-    async def run(self, _request: Request, context: GatewayContext) -> None:
-        await enqueue_trace(context)
+    async def run(self, request: Request, context: GatewayContext) -> None:
+        await enqueue_trace(request, context)
         context.metadata["trace_enqueued"] = True

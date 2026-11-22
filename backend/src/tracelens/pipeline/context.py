@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
@@ -19,6 +20,10 @@ class GatewayContext:
     request_log_id: uuid.UUID | None = None
     bearer_token: str | None = None
     request_id: str | None = None
+    trace_id: str | None = None
+    root_span_id: str | None = None
+    parent_span_id: str | None = None
+    started_at: datetime | None = None
     chat_request: ChatCompletionRequest | None = None
     chat_response: ChatCompletionResponse | None = None
     stream_chunks: AsyncIterator[dict[str, Any]] | None = None

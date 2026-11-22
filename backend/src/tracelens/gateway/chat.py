@@ -14,7 +14,9 @@ from tracelens.gateway.errors import (
     openai_error_body,
 )
 from tracelens.gateway.streaming import stream_chat_response
+from tracelens.observe.metrics import GATEWAY_REQUESTS
 from tracelens.observe.request_log import persist_request_log
+from tracelens.observe.traces import format_traceparent, init_trace_context
 from tracelens.pipeline.context import GatewayContext
 from tracelens.pipeline.executor import build_chat_pipeline
 from tracelens.providers.schemas import ChatCompletionRequest
@@ -37,6 +39,7 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
         request_id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
         chat_request=chat_request,
     )
+    init_trace_context(request, context)
 
     pipeline = build_chat_pipeline(session)
     stream_mode = chat_request.stream
@@ -45,6 +48,7 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
     try:
         await pipeline.run(request, context, skip=skip_end_stages)
     except GatewayAuthError as exc:
+        GATEWAY_REQUESTS.labels(outcome="auth_error").inc()
         return JSONResponse(status_code=401, content=openai_error_body(exc.message, code=exc.code))
     except GatewayRateLimitError as exc:
         return JSONResponse(
@@ -116,8 +120,14 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
         )
 
     body = context.chat_response.model_dump()
+    GATEWAY_REQUESTS.labels(outcome="success").inc()
+    trace_headers: dict[str, str] = {}
+    if context.trace_id and context.root_span_id:
+        trace_headers["traceparent"] = format_traceparent(context.trace_id, context.root_span_id)
+
     body["tracelens"] = {
         "tenant_id": str(context.tenant_id) if context.tenant_id else None,
+        "trace_id": context.trace_id,
         "stages": context.stages_executed,
         "requested_model": context.requested_model,
         "selected_model": context.selected_model,
@@ -128,7 +138,7 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
         "cost_without_optimization": str(context.cost_without_optimization),
         "savings_usd": str(context.cost_without_optimization - context.cost_actual),
     }
-    return JSONResponse(status_code=200, content=body)
+    return JSONResponse(status_code=200, content=body, headers=trace_headers)
 
 
 def _validation_error_body(exc: ValidationError) -> dict[str, object]:

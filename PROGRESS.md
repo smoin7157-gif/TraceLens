@@ -14,7 +14,7 @@
 | 8 | Health, breaker, retries, fallback | ✅ Done | 2025-11-22 |
 | 9 | Budgets & economics row | ✅ Done | 2025-11-22 |
 | 10 | Caching & cost optimization | ✅ Done | 2025-11-22 |
-| 11 | Observability core & Python SDK | ⬜ Not started | — |
+| 11 | Observability core & Python SDK | ✅ Done | 2025-11-22 |
 | 12 | Prompts, datasets, evaluators, alerts | ⬜ Not started | — |
 | 13 | Dashboard (Next.js) | ⬜ Not started | — |
 | 14 | Differentiators, dogfooding, proof & docs | ⬜ Not started | — |
@@ -24,6 +24,27 @@
 ---
 
 ## Session log
+
+### Phase 11 — Observability core & Python SDK — 2025-11-22
+
+**Goal (3 lines):**
+- Async trace enqueue to Redis; worker persists trace + span trees in Postgres.
+- Prometheus `/metrics`; structured JSON logging; W3C `traceparent` on gateway responses.
+- Python SDK: `trace_span` context manager + `@traced` decorator with child spans.
+
+**Built:**
+- `observe/traces.py`, `trace_queue.py`, `persistence.py`, `metrics.py`, `workers/trace_worker.py`.
+- `sdk/python/tracelens_sdk/`; compose `trace-worker` service.
+
+**Verify:**
+- `pytest -q tests/unit/test_trace_queue.py tests/unit/test_sdk_spans.py tests/unit/test_metrics_endpoint.py`
+
+**Interview talking point:**
+- **Fail-open enqueue + async worker**: gateway only LPUSHes JSON — if Redis blips, request still succeeds; worker owns durability; tradeoff is seconds of lag before traces appear in Postgres.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 10 — Caching & cost optimization — 2025-11-22
 
