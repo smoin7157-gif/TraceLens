@@ -122,6 +122,11 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
         "requested_model": context.requested_model,
         "selected_model": context.selected_model,
         "routing_explanation": context.routing_explanation,
+        "cache_status": context.cache_status,
+        "optimizations_applied": context.optimizations_applied,
+        "cost_actual": str(context.cost_actual),
+        "cost_without_optimization": str(context.cost_without_optimization),
+        "savings_usd": str(context.cost_without_optimization - context.cost_actual),
     }
     return JSONResponse(status_code=200, content=body)
 

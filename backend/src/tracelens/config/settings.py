@@ -4,6 +4,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from tracelens.config.budget import BudgetPolicy
+from tracelens.config.optimize import CachePolicy, CompressPolicy, DowngradePolicy
 from tracelens.config.pipeline import PipelineToggles, default_pipeline_toggles
 from tracelens.config.resilience import CircuitBreakerPolicy, RetryPolicy, RoutingPolicy
 from tracelens.config.security import (
@@ -59,6 +60,9 @@ class Settings(BaseSettings):
     retry: RetryPolicy = Field(default_factory=RetryPolicy)
     routing: RoutingPolicy = Field(default_factory=RoutingPolicy)
     budget: BudgetPolicy = Field(default_factory=BudgetPolicy)
+    cache: CachePolicy = Field(default_factory=CachePolicy)
+    compress: CompressPolicy = Field(default_factory=CompressPolicy)
+    downgrade: DowngradePolicy = Field(default_factory=DowngradePolicy)
 
     @property
     def is_production(self) -> bool:

@@ -13,7 +13,7 @@
 | 7 | Rate limits, validation, security scan | ✅ Done | 2025-11-22 |
 | 8 | Health, breaker, retries, fallback | ✅ Done | 2025-11-22 |
 | 9 | Budgets & economics row | ✅ Done | 2025-11-22 |
-| 10 | Caching & cost optimization | ⬜ Not started | — |
+| 10 | Caching & cost optimization | ✅ Done | 2025-11-22 |
 | 11 | Observability core & Python SDK | ⬜ Not started | — |
 | 12 | Prompts, datasets, evaluators, alerts | ⬜ Not started | — |
 | 13 | Dashboard (Next.js) | ⬜ Not started | — |
@@ -24,6 +24,28 @@
 ---
 
 ## Session log
+
+### Phase 10 — Caching & cost optimization — 2025-11-22
+
+**Goal (3 lines):**
+- Exact Redis cache + pgvector semantic cache (tenant-scoped, ≥0.92 similarity).
+- Optimizer: history trim + whitespace compress; safe-downgrade routing + model override header.
+- Full savings columns: `cost_without_optimization - cost_actual` in `requests_log` and response.
+
+**Built:**
+- `optimize/cache.py`, `semantic.py`, `compress.py`, `cost.py`, `embeddings/backends/minilm.py`.
+- `CacheLookupStage`, `CacheWriteStage`, `OptimizerStage`; migration `005_semantic_cache`.
+
+**Verify:**
+- `pytest -q tests/unit/test_exact_cache.py tests/unit/test_savings_math.py tests/unit/test_semantic_similarity.py`
+- Integration: `test_semantic_cache_isolation.py` (Postgres)
+
+**Interview talking point:**
+- **Exact-before-semantic ladder**: SHA-keyed Redis for identical prompts, then pgvector for near-dups — skips provider only after tenant-scoped lookup; tradeoff is embedding cost on miss vs zero marginal cost on hit.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 9 — Budgets & economics row — 2025-11-22
 

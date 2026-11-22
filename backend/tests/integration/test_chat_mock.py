@@ -55,8 +55,11 @@ async def test_chat_completions_mock_end_to_end(
             "validation",
             "security_scan",
             "budget",
+            "optimizer",
             "router",
+            "cache_lookup",
             "provider",
+            "cache_write",
             "request_log",
             "trace_enqueue",
         ]

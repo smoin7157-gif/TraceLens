@@ -1,10 +1,9 @@
-from decimal import Decimal
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracelens.db.models.budget import Budget
 from tracelens.db.redis_client import RedisClient
 from tracelens.db.repositories.request_log import RequestLogRepository
+from tracelens.optimize.cost import compute_economics
 from tracelens.pipeline.context import GatewayContext
 from tracelens.security.budgets import BudgetCounterService
 
@@ -31,9 +30,17 @@ async def persist_request_log(
     if context.chat_request is None:
         return
 
-    tokens_in_original, tokens_in_final, tokens_out = estimate_tokens_from_messages(context)
-    cost_actual = Decimal("0")
-    cost_without = Decimal("0")
+    if context.tokens_in_original > 0:
+        tokens_in_original = context.tokens_in_original
+        tokens_in_final = context.tokens_in_final or context.tokens_in_original
+        tokens_out = context.tokens_out
+    else:
+        tokens_in_original, tokens_in_final, tokens_out = estimate_tokens_from_messages(context)
+
+    cost_actual, cost_without = compute_economics(context)
+    if context.cost_without_optimization > 0:
+        cost_actual = context.cost_actual
+        cost_without = context.cost_without_optimization
 
     repo = RequestLogRepository(session, context.tenant_id)
     existing = await repo.get_by_request_id(context.request_id)
@@ -51,6 +58,8 @@ async def persist_request_log(
         tokens_out=tokens_out,
         cost_actual=cost_actual,
         cost_without_optimization=cost_without,
+        cache_status=context.cache_status,
+        optimizations_applied=list(context.optimizations_applied),
         routing_explanation=dict(context.routing_explanation),
     )
     context.request_log_id = row.id

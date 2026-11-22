@@ -9,8 +9,11 @@ class PipelineToggles(BaseModel):
     validation: bool = True
     security_scan: bool = True
     budget: bool = True
+    optimizer: bool = True
     router: bool = True
+    cache_lookup: bool = True
     provider: bool = True
+    cache_write: bool = True
     request_log: bool = True
     trace_enqueue: bool = True
 

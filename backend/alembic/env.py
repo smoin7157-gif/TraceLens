@@ -13,6 +13,7 @@ from tracelens.db.models import (  # noqa: F401
     Budget,
     Provider,
     RequestLog,
+    SemanticCacheEntry,
     Span,
     Tenant,
     Trace,

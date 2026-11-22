@@ -22,6 +22,9 @@ class ProviderCallStage:
     async def run(self, request: Request, context: GatewayContext) -> None:
         if context.chat_request is None:
             raise GatewayValidationError("Chat request missing on gateway context")
+        if context.cache_hit and context.chat_response is not None:
+            context.tokens_out = context.chat_response.usage.completion_tokens
+            return
 
         context.metadata.update(retry_metadata())
         candidates = context.route_candidates or [context.chat_request.model]
@@ -66,6 +69,8 @@ class ProviderCallStage:
                 attempts.append({"model": model, "result": "success", "latency_ms": latency_ms})
                 context.routing_explanation["selected_model"] = model
                 context.routing_explanation["attempts"] = attempts
+                if context.chat_response is not None:
+                    context.tokens_out = context.chat_response.usage.completion_tokens
                 return
             except ProviderError as exc:
                 last_error = exc

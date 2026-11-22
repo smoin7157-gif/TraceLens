@@ -6,6 +6,9 @@ from tracelens.pipeline.context import GatewayContext
 from tracelens.pipeline.stages.auth import AuthStage
 from tracelens.pipeline.stages.base import PipelineStage
 from tracelens.pipeline.stages.budget import BudgetStage
+from tracelens.pipeline.stages.cache_lookup import CacheLookupStage
+from tracelens.pipeline.stages.cache_write import CacheWriteStage
+from tracelens.pipeline.stages.optimizer import OptimizerStage
 from tracelens.pipeline.stages.provider_call import ProviderCallStage
 from tracelens.pipeline.stages.rate_limit import RateLimitStage
 from tracelens.pipeline.stages.request_log import RequestLogStage
@@ -48,8 +51,11 @@ def build_chat_pipeline(session: AsyncSession) -> Pipeline:
         ValidationStage(),
         SecurityScanStage(),
         BudgetStage(session),
+        OptimizerStage(),
         RouterStage(),
+        CacheLookupStage(session),
         ProviderCallStage(session),
+        CacheWriteStage(session),
         RequestLogStage(session),
         TraceEnqueueStage(),
     ]

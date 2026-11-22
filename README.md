@@ -21,7 +21,8 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 7 | Rate limits, validation, security scan | Done |
 | 8 | Health, circuit breaker, retries, fallback routing | Done |
 | 9 | Budgets, request economics log, spend webhooks | Done |
-| 10–14 | See `PLAN.md` | Planned |
+| 10 | Caching, prompt compression, cost savings | Done |
+| 11–14 | See `PLAN.md` | Planned |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 

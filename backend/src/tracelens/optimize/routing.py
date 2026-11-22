@@ -1,6 +1,7 @@
 from typing import Any
 
 from tracelens.config import get_settings
+from tracelens.optimize.cost import model_unit_price
 from tracelens.providers.router import resolve_provider_for_model
 
 
@@ -56,3 +57,27 @@ def build_routing_plan(
 
 def provider_for_model(model: str) -> str:
     return resolve_provider_for_model(model)
+
+
+def apply_safe_downgrade(
+    ordered: list[str],
+    requested_model: str,
+    complexity_score: float,
+) -> tuple[list[str], list[str]]:
+    """Reorder candidates toward cheaper models when complexity is low."""
+    settings = get_settings().downgrade
+    applied: list[str] = []
+    if complexity_score > float(settings.complexity_word_threshold):
+        return ordered, applied
+    if settings.stub_eval_quality_score < settings.min_eval_quality_score:
+        return ordered, applied
+
+    by_cost = sorted(ordered, key=lambda m: model_unit_price(m))
+    if not by_cost:
+        return ordered, applied
+    cheapest = by_cost[0]
+    if model_unit_price(cheapest) < model_unit_price(requested_model):
+        reordered = [cheapest, *[m for m in ordered if m != cheapest]]
+        applied.append("safe_downgrade")
+        return reordered, applied
+    return ordered, applied
