@@ -19,5 +19,9 @@ class GatewayContext:
     stream_chunks: AsyncIterator[dict[str, Any]] | None = None
     allowed_models: list[str] = field(default_factory=list)
     client_ip: str | None = None
+    requested_model: str | None = None
+    selected_model: str | None = None
+    route_candidates: list[str] = field(default_factory=list)
+    routing_explanation: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
     stages_executed: list[str] = field(default_factory=list)

@@ -54,6 +54,7 @@ async def test_chat_completions_mock_end_to_end(
             "rate_limit",
             "validation",
             "security_scan",
+            "router",
             "provider",
             "trace_enqueue",
         ]

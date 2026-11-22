@@ -7,6 +7,7 @@ from tracelens import __version__
 from tracelens.api import admin_keys, gateway_probe
 from tracelens.config import get_settings
 from tracelens.gateway import chat, models
+from tracelens.gateway import health as provider_health
 from tracelens.gateway.errors import GatewayAuthError, openai_error_body
 
 settings = get_settings()
@@ -21,6 +22,7 @@ app.include_router(admin_keys.router)
 app.include_router(gateway_probe.router)
 app.include_router(chat.router)
 app.include_router(models.router)
+app.include_router(provider_health.router)
 
 
 @app.exception_handler(GatewayAuthError)

@@ -11,7 +11,7 @@
 | 5 | Multi-provider adapters & models | ✅ Done | 2025-11-22 |
 | 6 | Streaming SSE | ✅ Done | 2025-11-22 |
 | 7 | Rate limits, validation, security scan | ✅ Done | 2025-11-22 |
-| 8 | Health, breaker, retries, fallback | ⬜ Not started | — |
+| 8 | Health, breaker, retries, fallback | ✅ Done | 2025-11-22 |
 | 9 | Budgets & economics row | ⬜ Not started | — |
 | 10 | Caching & cost optimization | ⬜ Not started | — |
 | 11 | Observability core & Python SDK | ⬜ Not started | — |
@@ -24,6 +24,27 @@
 ---
 
 ## Session log
+
+### Phase 8 — Health, circuit breaker, retries, fallback — 2025-11-22
+
+**Goal (3 lines):**
+- Redis rolling stats per provider/model; circuit breaker (closed/open/half-open).
+- Jittered exponential retries honoring `Retry-After`; `RouterStage` + fallback chains.
+- `GET /health/providers`; chat responses include `routing_explanation`.
+
+**Built:**
+- `resilience/circuit_breaker.py`, `provider_stats.py`, `optimize/routing.py`, `providers/retry.py`.
+- `pipeline/stages/router.py`, `provider_call.py`; `gateway/health.py`; resilience config on `Settings`.
+
+**Verify:**
+- `pytest -q tests/unit/test_circuit_breaker.py tests/unit/test_provider_retry.py tests/unit/test_routing_plan.py tests/unit/test_provider_health.py`
+
+**Interview talking point:**
+- **Separate router from provider call**: routing reads stats and orders candidates without I/O to vendors; the provider stage owns breaker, retry, and fallback so you can tune resilience without re-running policy logic; tradeoff is two pipeline hops vs one monolithic stage.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 7 — Rate limits, validation, security — 2025-11-22
 

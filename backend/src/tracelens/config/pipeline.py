@@ -8,6 +8,7 @@ class PipelineToggles(BaseModel):
     rate_limit: bool = True
     validation: bool = True
     security_scan: bool = True
+    router: bool = True
     provider: bool = True
     trace_enqueue: bool = True
 

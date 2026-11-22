@@ -19,7 +19,8 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 5 | OpenAI / Anthropic / Gemini + /v1/models | Done |
 | 6 | Streaming SSE (`stream: true`) | Done |
 | 7 | Rate limits, validation, security scan | Done |
-| 8–14 | See `PLAN.md` | Planned |
+| 8 | Health, circuit breaker, retries, fallback routing | Done |
+| 9–14 | See `PLAN.md` | Planned |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 
@@ -50,9 +51,10 @@ Health check:
 
 ```bash
 curl http://localhost:8000/health
+curl http://localhost:8000/health/providers
 ```
 
-Expected JSON includes `"status": "ok"` and the API version.
+Expected JSON includes `"status": "ok"` and the API version. `/health/providers` lists circuit state and rolling latency/error stats per configured model.
 
 ### Local development (backend only)
 

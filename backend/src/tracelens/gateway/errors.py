@@ -16,12 +16,14 @@ class ProviderError(Exception):
         status_code: int = 500,
         code: str = "server_error",
         error_type: str = "server_error",
+        retry_after_seconds: float | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.status_code = status_code
         self.code = code
         self.error_type = error_type
+        self.retry_after_seconds = retry_after_seconds
 
 
 class GatewayValidationError(Exception):

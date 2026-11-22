@@ -102,6 +102,9 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
     body["tracelens"] = {
         "tenant_id": str(context.tenant_id) if context.tenant_id else None,
         "stages": context.stages_executed,
+        "requested_model": context.requested_model,
+        "selected_model": context.selected_model,
+        "routing_explanation": context.routing_explanation,
     }
     return JSONResponse(status_code=200, content=body)
 

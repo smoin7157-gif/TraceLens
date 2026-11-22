@@ -4,6 +4,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from tracelens.config.pipeline import PipelineToggles, default_pipeline_toggles
+from tracelens.config.resilience import CircuitBreakerPolicy, RetryPolicy, RoutingPolicy
 from tracelens.config.security import (
     InjectionAction,
     PiiMode,
@@ -53,6 +54,9 @@ class Settings(BaseSettings):
     security_policy: SecurityPolicy = Field(default_factory=SecurityPolicy)
     pii_mode: PiiMode = Field(default="block", alias="PII_MODE")
     injection_action: InjectionAction = Field(default="block", alias="INJECTION_ACTION")
+    circuit_breaker: CircuitBreakerPolicy = Field(default_factory=CircuitBreakerPolicy)
+    retry: RetryPolicy = Field(default_factory=RetryPolicy)
+    routing: RoutingPolicy = Field(default_factory=RoutingPolicy)
 
     @property
     def is_production(self) -> bool:
