@@ -48,6 +48,7 @@ def test_build_span_tree_parent_child() -> None:
 async def test_dashboard_list_traces(db_session) -> None:
     tenant_id = uuid.uuid4()
     db_session.add(Tenant(id=tenant_id, name="Dash", slug=f"d-{tenant_id.hex[:6]}"))
+    await db_session.flush()
     trace = Trace(
         tenant_id=tenant_id,
         trace_id="trace-demo-1",

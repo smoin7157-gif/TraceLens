@@ -2,6 +2,7 @@ import uuid
 
 import pytest
 
+from tracelens.db.models.tenant import Tenant
 from tracelens.optimize.semantic import SemanticCache
 from tracelens.providers.schemas import (
     ChatCompletionChoice,
@@ -16,6 +17,9 @@ from tracelens.providers.schemas import (
 async def test_semantic_cache_isolated_by_tenant(db_session) -> None:
     tenant_a = uuid.uuid4()
     tenant_b = uuid.uuid4()
+    db_session.add(Tenant(id=tenant_a, name="TenantA", slug=f"a-{tenant_a.hex[:6]}"))
+    db_session.add(Tenant(id=tenant_b, name="TenantB", slug=f"b-{tenant_b.hex[:6]}"))
+    await db_session.flush()
     model = "mock-gpt"
     messages = [{"role": "user", "content": "shared prompt for semantic cache"}]
     response = ChatCompletionResponse(

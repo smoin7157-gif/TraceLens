@@ -15,8 +15,8 @@ from tracelens.workers.eval_worker import process_eval_queue_once
 @pytest.mark.asyncio
 async def test_eval_worker_updates_quality_score(db_session) -> None:
     tenant_id = uuid.uuid4()
-    tenant = Tenant(id=tenant_id, name="Eval", slug=f"ev-{tenant_id.hex[:6]}")
-    db_session.add(tenant)
+    db_session.add(Tenant(id=tenant_id, name="Eval", slug=f"ev-{tenant_id.hex[:6]}"))
+    await db_session.flush()
     evaluator = Evaluator(
         tenant_id=tenant_id,
         name="regex-pass",

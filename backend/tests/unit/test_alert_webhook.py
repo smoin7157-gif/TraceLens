@@ -12,6 +12,7 @@ from tracelens.observe.alerts import create_alert, fire_alert
 async def test_alert_fires_webhook_on_spike(db_session) -> None:
     tenant_id = uuid.uuid4()
     db_session.add(Tenant(id=tenant_id, name="Alert", slug=f"al-{tenant_id.hex[:6]}"))
+    await db_session.flush()
     alert = await create_alert(
         db_session,
         tenant_id,
