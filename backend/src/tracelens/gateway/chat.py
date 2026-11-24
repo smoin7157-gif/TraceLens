@@ -14,6 +14,7 @@ from tracelens.gateway.errors import (
     openai_error_body,
 )
 from tracelens.gateway.streaming import stream_chat_response
+from tracelens.observe.live_metrics import record_gateway_outcome
 from tracelens.observe.metrics import GATEWAY_REQUESTS
 from tracelens.observe.request_log import persist_request_log
 from tracelens.observe.traces import format_traceparent, init_trace_context
@@ -49,6 +50,7 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
         await pipeline.run(request, context, skip=skip_end_stages)
     except GatewayAuthError as exc:
         GATEWAY_REQUESTS.labels(outcome="auth_error").inc()
+        record_gateway_outcome("auth_error")
         return JSONResponse(status_code=401, content=openai_error_body(exc.message, code=exc.code))
     except GatewayRateLimitError as exc:
         return JSONResponse(
@@ -121,6 +123,7 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
 
     body = context.chat_response.model_dump()
     GATEWAY_REQUESTS.labels(outcome="success").inc()
+    record_gateway_outcome("success")
     trace_headers: dict[str, str] = {}
     if context.trace_id and context.root_span_id:
         trace_headers["traceparent"] = format_traceparent(context.trace_id, context.root_span_id)

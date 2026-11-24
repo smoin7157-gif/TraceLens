@@ -19,10 +19,11 @@ venv/
 *.pem
 credentials.json
 
-# Node (dashboard, later)
+# Node (dashboard)
 node_modules/
 .next/
 out/
+*.tsbuildinfo
 
 # IDE
 .idea/

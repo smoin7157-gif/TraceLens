@@ -62,6 +62,18 @@ services:
       redis:
         condition: service_healthy
 
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_TRACELENS_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_started
+
   trace-worker:
     build:
       context: ./backend

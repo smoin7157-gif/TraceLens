@@ -16,7 +16,7 @@
 | 10 | Caching & cost optimization | ✅ Done | 2025-11-22 |
 | 11 | Observability core & Python SDK | ✅ Done | 2025-11-22 |
 | 12 | Prompts, datasets, evaluators, alerts | ✅ Done | 2025-11-22 |
-| 13 | Dashboard (Next.js) | ⬜ Not started | — |
+| 13 | Dashboard (Next.js) | ✅ Done | 2025-11-24 |
 | 14 | Differentiators, dogfooding, proof & docs | ⬜ Not started | — |
 
 **Legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⏸ Blocked
@@ -24,6 +24,29 @@
 ---
 
 ## Session log
+
+### Phase 13 — Dashboard (Next.js) — 2025-11-24
+
+**Goal (3 lines):**
+- App Router dashboard: Overview (SSE live metrics), Providers, Cost, Security, Trace Explorer, Prompts, Datasets/Experiments, Alerts, Settings.
+- FastAPI BFF under `/dashboard/*` + in-process live metrics ring buffer.
+- Compose `dashboard` on :3000; CI `npm run typecheck`.
+
+**Built:**
+- `backend/src/tracelens/api/dashboard.py`, `observe/live_metrics.py`; gateway outcome sampling for SSE.
+- `dashboard/` Next.js 14 + Tailwind + Recharts; `POST /dashboard/demo/seed` for demo tenant.
+
+**Verify:**
+- Backend: `ruff check src tests && mypy && pytest -q`
+- Dashboard: `cd dashboard && npm install && npm run typecheck`
+- Stack: `docker compose up --build` → http://localhost:3000 (set tenant in Settings + optional demo seed)
+
+**Interview talking point:**
+- **SSE from process-local ring buffer**: dashboard live chart reads gateway outcomes without hammering Postgres; tradeoff is per-replica view until metrics move to Redis/Prometheus aggregates.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅ / tsc ✅
+
+---
 
 ### Phase 12 — Prompts, datasets, experiments, evaluators, alerts — 2025-11-22
 

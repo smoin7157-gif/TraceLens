@@ -24,7 +24,8 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 10 | Caching, prompt compression, cost savings | Done |
 | 11 | Traces, Prometheus metrics, Python SDK | Done |
 | 12 | Prompts, datasets, experiments, evaluators, alerts | Done |
-| 13–14 | See `PLAN.md` | Planned |
+| 13 | Next.js dashboard (Overview SSE, traces, cost, providers) | Done |
+| 14 | See `PLAN.md` | Planned |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 
@@ -32,7 +33,7 @@ This repo is being built in **14 incremental phases** with tests and CI per phas
 
 - **Backend:** Python 3.12, FastAPI, httpx, Pydantic v2, SQLAlchemy 2 + Alembic
 - **Data:** Postgres (+ pgvector), Redis
-- **Dashboard:** Next.js (upcoming phases)
+- **Dashboard:** Next.js 14 (App Router), Tailwind, Recharts
 - **Infra:** Docker Compose, GitHub Actions
 
 ## Quick start (Phase 1)
@@ -47,7 +48,7 @@ cd TraceLens
 # Optional: copy env template
 cp .env.example .env
 
-# Start Postgres, Redis, and API
+# Start Postgres, Redis, API, workers, and dashboard
 docker compose up --build
 ```
 
@@ -61,6 +62,8 @@ curl http://localhost:8000/metrics
 
 Expected JSON includes `"status": "ok"` and the API version. `/health/providers` lists circuit state and rolling latency/error stats per configured model.
 
+**Dashboard (Phase 13):** open [http://localhost:3000](http://localhost:3000). In **Settings**, paste a tenant UUID (from admin APIs) or call `POST /dashboard/demo/seed` with `X-Admin-Token` to create a demo tenant and API key.
+
 ### Local development (backend only)
 
 ```bash
@@ -72,11 +75,20 @@ ruff check src tests && ruff format --check src tests && mypy && pytest -q
 uvicorn tracelens.main:app --reload
 ```
 
+### Local development (dashboard)
+
+```bash
+cd dashboard
+npm install
+npm run dev
+# Set NEXT_PUBLIC_TRACELENS_API_URL=http://localhost:8000
+```
+
 ## Repository layout
 
 ```
 backend/          # FastAPI application (tracelens package)
-dashboard/        # Next.js UI (later phases)
+dashboard/        # Next.js App Router UI (Phase 13+)
 sdk/              # Python SDK + JS snippet (later phases)
 scripts/          # Chaos, benchmark, demo traffic (later phases)
 ```
