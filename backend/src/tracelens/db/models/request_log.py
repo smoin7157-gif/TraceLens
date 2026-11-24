@@ -43,3 +43,6 @@ class RequestLog(Base, PrimaryKeyMixin, TimestampMixin):
     routing_explanation: Mapped[dict[str, object]] = mapped_column(
         JSONB, nullable=False, server_default="{}"
     )
+    request_payload: Mapped[dict[str, object]] = mapped_column(
+        JSONB, nullable=False, server_default="{}"
+    )

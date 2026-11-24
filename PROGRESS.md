@@ -17,13 +17,35 @@
 | 11 | Observability core & Python SDK | ✅ Done | 2025-11-22 |
 | 12 | Prompts, datasets, evaluators, alerts | ✅ Done | 2025-11-22 |
 | 13 | Dashboard (Next.js) | ✅ Done | 2025-11-24 |
-| 14 | Differentiators, dogfooding, proof & docs | ⬜ Not started | — |
+| 14 | Differentiators, dogfooding, proof & docs | ✅ Done | 2025-11-24 |
 
 **Legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⏸ Blocked
 
 ---
 
 ## Session log
+
+### Phase 14 — Differentiators, dogfooding, proof & docs — 2025-11-24
+
+**Goal (3 lines):**
+- Replay snapshots, shadow sampling, YAML overlay hot-reload, weekly savings export.
+- Chaos/benchmark/demo scripts; ARCHITECTURE + RESULTS + integration guides.
+- Acceptance: failover chaos demo, benchmark table, compose demo seed profile.
+
+**Built:**
+- Migration `007`, `observe/replay.py`, `observe/shadow.py`, `config/overlay.py`, admin config/replay APIs.
+- `scripts/*`, `config/overlay.yaml`, `ARCHITECTURE.md`, `RESULTS.md`, `docs/integrations/*`.
+
+**Verify:**
+- `pytest -q tests/unit/test_replay_diff.py tests/unit/test_shadow_sampling.py tests/unit/test_config_hot_reload.py`
+- `python scripts/chaos_provider.py` (with seeded API key)
+
+**Interview talking point:**
+- **Overlay + admin reload**: change fallback chains without redeploying; env still owns secrets; tradeoff is file-based config until you add a config service or CRD watcher.
+
+**Tests:** ruff ✅ / mypy ✅ / pytest ✅
+
+---
 
 ### Phase 13 — Dashboard (Next.js) — 2025-11-24
 

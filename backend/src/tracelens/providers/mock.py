@@ -19,6 +19,18 @@ from tracelens.providers.schemas import (
 )
 
 
+def _error_rate_for_model(request: Request | None, model: str, error_rate: float) -> float:
+    if request is None:
+        return error_rate
+    raw = request.headers.get("X-TraceLens-Mock-Error-Models")
+    if not raw:
+        return error_rate
+    allowed = {part.strip() for part in raw.split(",") if part.strip()}
+    if allowed and model not in allowed:
+        return 0.0
+    return error_rate
+
+
 def _parse_mock_headers(request: Request | None) -> tuple[float, float, int | None]:
     settings = get_settings()
     latency_ms = settings.mock_default_latency_ms
@@ -52,11 +64,12 @@ class MockProvider:
     ) -> ChatCompletionResponse:
         latency_ms, error_rate, seed = _parse_mock_headers(http_request)
         rng = random.Random(seed)
+        effective_error_rate = _error_rate_for_model(http_request, request.model, error_rate)
 
         if latency_ms > 0:
             await asyncio.sleep(latency_ms / 1000.0)
 
-        if rng.random() < error_rate:
+        if rng.random() < effective_error_rate:
             if rng.random() < 0.5:
                 raise ProviderError(
                     "Mock rate limit triggered",

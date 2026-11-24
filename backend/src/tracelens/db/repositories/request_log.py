@@ -30,6 +30,7 @@ class RequestLogRepository(TenantScopedRepository[RequestLog]):
         cache_status: str,
         optimizations_applied: list[str],
         routing_explanation: dict[str, object],
+        request_payload: dict[str, object] | None = None,
     ) -> RequestLog:
         entity = RequestLog(
             tenant_id=self.tenant_id,
@@ -46,6 +47,7 @@ class RequestLogRepository(TenantScopedRepository[RequestLog]):
             cache_status=cache_status,
             optimizations_applied=optimizations_applied,
             routing_explanation=routing_explanation,
+            request_payload=request_payload or {},
         )
         return await self.add(entity)
 

@@ -1,0 +1,13 @@
+# TraceLens runtime overlay (hot-reloaded via POST /admin/config/reload)
+routing:
+  fallback_chains:
+    mock-gpt:
+      - mock-gpt
+      - mock-gpt-4
+    mock-gpt-4:
+      - mock-gpt-4
+      - mock-gpt
+shadow:
+  enabled: false
+  sample_rate: 0.1
+  shadow_model: mock-gpt-4

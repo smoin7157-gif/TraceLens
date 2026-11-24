@@ -5,7 +5,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from tracelens import __version__
-from tracelens.api import admin_budgets, admin_keys, admin_observe, dashboard, gateway_probe
+from tracelens.api import (
+    admin_budgets,
+    admin_config,
+    admin_keys,
+    admin_observe,
+    admin_replay,
+    dashboard,
+    gateway_probe,
+)
 from tracelens.config import get_settings
 from tracelens.gateway import chat, metrics_route, models
 from tracelens.gateway import health as provider_health
@@ -35,6 +43,8 @@ app.add_middleware(
 app.include_router(admin_keys.router)
 app.include_router(admin_budgets.router)
 app.include_router(admin_observe.router)
+app.include_router(admin_config.router)
+app.include_router(admin_replay.router)
 app.include_router(gateway_probe.router)
 app.include_router(chat.router)
 app.include_router(models.router)

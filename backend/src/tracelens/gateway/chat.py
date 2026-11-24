@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from fastapi import APIRouter, Request
@@ -101,14 +102,21 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
                     error_type="server_error",
                 ),
             )
+        stream_headers = {
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+            "X-TraceLens-Routing": json.dumps(context.routing_explanation, default=str),
+        }
+        if context.trace_id and context.root_span_id:
+            stream_headers["traceparent"] = format_traceparent(
+                context.trace_id,
+                context.root_span_id,
+            )
         return StreamingResponse(
             stream_chat_response(request, context, context.stream_chunks, session=session),
             media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no",
-            },
+            headers=stream_headers,
         )
 
     if context.chat_response is None:

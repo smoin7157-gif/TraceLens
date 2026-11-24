@@ -28,6 +28,17 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
 
+@pytest.fixture(autouse=True)
+def isolated_config_overlay(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep unit tests independent of repo config/overlay.yaml."""
+    from tracelens.config.settings import get_settings
+
+    monkeypatch.setenv("TRACELENS_CONFIG_OVERLAY_PATH", "__missing_overlay__.yaml")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
 @pytest.fixture(scope="session")
 def alembic_config() -> Config:
     return Config("alembic.ini")

@@ -47,6 +47,10 @@ async def persist_request_log(
     if existing is not None:
         return
 
+    response_text: str | None = None
+    if context.chat_response is not None and context.chat_response.choices:
+        response_text = context.chat_response.choices[0].message.content
+
     row = await repo.create_row(
         api_key_id=context.key_id,
         request_id=context.request_id,
@@ -61,6 +65,10 @@ async def persist_request_log(
         cache_status=context.cache_status,
         optimizations_applied=list(context.optimizations_applied),
         routing_explanation=dict(context.routing_explanation),
+        request_payload={
+            "request": context.chat_request.model_dump(mode="json"),
+            "response_text": response_text,
+        },
     )
     context.request_log_id = row.id
 

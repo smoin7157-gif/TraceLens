@@ -7,6 +7,27 @@
 
 The two halves are designed to **feed each other**: observability scores inform routing; every optimization is measured in traces (tokens and dollars saved).
 
+```mermaid
+flowchart TB
+  subgraph observe [Observe]
+    Traces[Traces + Spans]
+    Prompts[Prompts + Evals]
+    Dashboard[Next.js Dashboard]
+  end
+  subgraph control [Control]
+    Gateway[OpenAI-compatible Gateway]
+    Pipeline[Pipeline Stages]
+    Cache[Exact + Semantic Cache]
+  end
+  Client --> Gateway --> Pipeline --> Providers[LLM Providers]
+  Pipeline --> Traces
+  Pipeline --> Economics[requests_log]
+  Economics --> Dashboard
+  Prompts --> Gateway
+```
+
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full diagram and interview notes.
+
 ## Status
 
 | Phase | Description | State |
@@ -25,7 +46,7 @@ The two halves are designed to **feed each other**: observability scores inform 
 | 11 | Traces, Prometheus metrics, Python SDK | Done |
 | 12 | Prompts, datasets, experiments, evaluators, alerts | Done |
 | 13 | Next.js dashboard (Overview SSE, traces, cost, providers) | Done |
-| 14 | See `PLAN.md` | Planned |
+| 14 | Replay, shadow, overlay config, scripts, ARCHITECTURE, RESULTS | Done |
 
 This repo is being built in **14 incremental phases** with tests and CI per phase. See [`PLAN.md`](PLAN.md) for architecture and roadmap; [`PROGRESS.md`](PROGRESS.md) for the live checklist.
 
@@ -64,6 +85,20 @@ Expected JSON includes `"status": "ok"` and the API version. `/health/providers`
 
 **Dashboard (Phase 13):** open [http://localhost:3000](http://localhost:3000). In **Settings**, paste a tenant UUID (from admin APIs) or call `POST /dashboard/demo/seed` with `X-Admin-Token` to create a demo tenant and API key.
 
+**Demo seed (Phase 14):** `docker compose --profile demo up demo-seed` or `python scripts/seed_demo.py`.
+
+### Ops scripts (Phase 14)
+
+```bash
+pip install httpx
+export TRACELENS_API_KEY=tl_...
+python scripts/benchmark.py
+python scripts/chaos_provider.py
+python scripts/demo_traffic.py
+```
+
+Config overlay: edit [`config/overlay.yaml`](config/overlay.yaml), then `curl -X POST -H "X-Admin-Token: $ADMIN_API_TOKEN" http://localhost:8000/admin/config/reload`.
+
 ### Local development (backend only)
 
 ```bash
@@ -72,6 +107,8 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ruff check src tests && ruff format --check src tests && mypy && pytest -q
+# Repo-root overlay when running from backend/
+export TRACELENS_CONFIG_OVERLAY_PATH=../config/overlay.yaml
 uvicorn tracelens.main:app --reload
 ```
 
@@ -90,12 +127,15 @@ npm run dev
 backend/          # FastAPI application (tracelens package)
 dashboard/        # Next.js App Router UI (Phase 13+)
 sdk/              # Python SDK + JS snippet (later phases)
-scripts/          # Chaos, benchmark, demo traffic (later phases)
+scripts/          # chaos_provider, benchmark, demo_traffic, seed_demo
+config/           # Hot-reloadable overlay YAML
+docs/integrations # Hire AI, Interview OS guides
+RESULTS.md        # Dogfood metrics template (no fabricated numbers)
 ```
 
-## Dogfooding (planned)
+## Dogfooding
 
-Real traffic from **Hire AI** and **Interview OS** will drive benchmarks and `RESULTS.md` numbers in the final phases.
+Real traffic from **Hire AI** and **Interview OS** should populate [`RESULTS.md`](RESULTS.md). Integration steps: [`docs/integrations/hire-ai.md`](docs/integrations/hire-ai.md), [`docs/integrations/interview-os.md`](docs/integrations/interview-os.md).
 
 ## License
 

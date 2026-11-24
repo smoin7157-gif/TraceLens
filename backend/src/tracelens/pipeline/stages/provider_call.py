@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracelens.db.redis_client import RedisClient
 from tracelens.gateway.errors import GatewayValidationError, ProviderError
+from tracelens.observe.shadow import run_shadow_call_sync, schedule_shadow_call
 from tracelens.pipeline.context import GatewayContext
 from tracelens.providers.registry import ProviderRegistry
 from tracelens.providers.retry import call_with_retry, retry_metadata
@@ -71,6 +72,12 @@ class ProviderCallStage:
                 context.routing_explanation["attempts"] = attempts
                 if context.chat_response is not None:
                     context.tokens_out = context.chat_response.usage.completion_tokens
+                if request.headers.get("X-TraceLens-Shadow-Sync") == "1":
+                    await run_shadow_call_sync(
+                        self._registry, http_request=request, context=context
+                    )
+                else:
+                    schedule_shadow_call(self._registry, http_request=request, context=context)
                 return
             except ProviderError as exc:
                 last_error = exc

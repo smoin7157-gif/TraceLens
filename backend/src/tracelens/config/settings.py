@@ -15,6 +15,7 @@ from tracelens.config.security import (
     SecurityPolicy,
     ValidationPolicy,
 )
+from tracelens.config.shadow import ShadowPolicy
 
 
 class Settings(BaseSettings):
@@ -65,6 +66,7 @@ class Settings(BaseSettings):
     compress: CompressPolicy = Field(default_factory=CompressPolicy)
     downgrade: DowngradePolicy = Field(default_factory=DowngradePolicy)
     observe: ObservePolicy = Field(default_factory=ObservePolicy)
+    shadow: ShadowPolicy = Field(default_factory=ShadowPolicy)
 
     @property
     def is_production(self) -> bool:
@@ -73,4 +75,6 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    from tracelens.config.overlay import build_settings
+
+    return build_settings()
