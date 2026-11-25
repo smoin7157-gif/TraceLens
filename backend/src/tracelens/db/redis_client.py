@@ -11,7 +11,11 @@ def _pool() -> ConnectionPool:
     return ConnectionPool.from_url(
         settings.redis_url,
         decode_responses=True,
+        max_connections=32,
     )
+
+
+_client: Redis | None = None
 
 
 class RedisClient:
@@ -19,10 +23,17 @@ class RedisClient:
 
     @classmethod
     def connection(cls) -> Redis:
-        return Redis(connection_pool=_pool())
+        global _client
+        if _client is None:
+            _client = Redis(connection_pool=_pool())
+        return _client
 
     @classmethod
     async def close(cls) -> None:
+        global _client
+        if _client is not None:
+            await _client.aclose()
+            _client = None
         pool = _pool()
         await pool.disconnect()
         _pool.cache_clear()
