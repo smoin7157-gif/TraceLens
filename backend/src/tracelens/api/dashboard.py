@@ -18,8 +18,9 @@ from tracelens.db.models.trace import Span, Trace
 from tracelens.db.repositories.api_key import ApiKeyRepository
 from tracelens.db.repositories.tenant import TenantRepository
 from tracelens.gateway.health import provider_health
+from tracelens.observe.economics_agg import tenant_economics_summary, tenant_security_summary
 from tracelens.observe.live_metrics import snapshot, snapshot_json
-from tracelens.observe.prompts import compare_prompt_versions
+from tracelens.observe.prompts import compare_prompts_for_tenant
 from tracelens.security.keys import issue_api_key
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -50,18 +51,11 @@ async def dashboard_overview(
 ) -> dict[str, Any]:
     await _require_tenant(session, tenant_id)
     live = snapshot()
-    stmt = select(RequestLog).where(RequestLog.tenant_id == tenant_id).limit(200)
-    logs = list((await session.execute(stmt)).scalars().all())
-    savings = sum((row.cost_without_optimization - row.cost_actual for row in logs), start=0)
-    cache_hits = sum(1 for row in logs if row.cache_status in {"exact", "semantic"})
+    economics = await tenant_economics_summary(session, tenant_id)
     return {
         "tenant_id": str(tenant_id),
         "live": live,
-        "economics": {
-            "request_count": len(logs),
-            "total_savings_usd": str(savings),
-            "cache_hit_rate": (cache_hits / len(logs)) if logs else 0.0,
-        },
+        "economics": economics,
     }
 
 
@@ -177,20 +171,7 @@ async def dashboard_prompts(
     session: SessionDep,
 ) -> dict[str, Any]:
     await _require_tenant(session, tenant_id)
-    stmt = select(Prompt).where(Prompt.tenant_id == tenant_id)
-    prompts = list((await session.execute(stmt)).scalars().all())
-    rows: list[dict[str, Any]] = []
-    for prompt in prompts:
-        compare = await compare_prompt_versions(session, tenant_id, prompt.id)
-        rows.append(
-            {
-                "id": str(prompt.id),
-                "name": prompt.name,
-                "slug": prompt.slug,
-                "versions": compare,
-            }
-        )
-    return {"data": rows}
+    return {"data": await compare_prompts_for_tenant(session, tenant_id)}
 
 
 @router.get("/datasets/experiments")
@@ -243,14 +224,7 @@ async def dashboard_security_summary(
     session: SessionDep,
 ) -> dict[str, Any]:
     await _require_tenant(session, tenant_id)
-    stmt = select(RequestLog).where(RequestLog.tenant_id == tenant_id).limit(500)
-    logs = list((await session.execute(stmt)).scalars().all())
-    blocked = sum(1 for row in logs if row.status != "completed")
-    return {
-        "tenant_id": str(tenant_id),
-        "blocked_or_error_requests": blocked,
-        "total_reviewed": len(logs),
-    }
+    return await tenant_security_summary(session, tenant_id)
 
 
 @router.post("/demo/seed")
