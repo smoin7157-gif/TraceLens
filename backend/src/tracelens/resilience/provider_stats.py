@@ -1,4 +1,6 @@
+import asyncio
 import time
+from typing import Any
 
 from redis.asyncio import Redis
 
@@ -44,15 +46,17 @@ class ProviderStats:
         window_start = now - self._window
         latency_key = self._latency_key()
         error_key = self._error_key()
-        await self._redis.zremrangebyscore(latency_key, "-inf", window_start)
-        await self._redis.zremrangebyscore(error_key, "-inf", window_start)
-        scored = await self._redis.zrange(latency_key, 0, -1, withscores=True)
+        async with self._redis.pipeline(transaction=False) as pipe:
+            pipe.zremrangebyscore(latency_key, "-inf", window_start)
+            pipe.zremrangebyscore(error_key, "-inf", window_start)
+            pipe.zrange(latency_key, 0, -1, withscores=True)
+            pipe.zcard(error_key)
+            _, _, scored, error_count = await pipe.execute()
         latencies: list[float] = []
         for entry in scored:
             if not isinstance(entry, tuple) or len(entry) != 2:
                 continue
             latencies.append(float(entry[1]))
-        error_count = await self._redis.zcard(error_key)
         total_requests = len(latencies) + int(error_count)
         p95 = 0.0
         if latencies:
@@ -65,3 +69,35 @@ class ProviderStats:
             "error_rate": float(error_rate),
             "sample_count": int(total_requests),
         }
+
+
+_DEFAULT_SNAPSHOT: dict[str, float | int] = {
+    "p95_latency_ms": 50.0,
+    "error_rate": 0.0,
+    "sample_count": 0,
+}
+
+
+async def snapshot_models(
+    redis: Redis,
+    *,
+    tenant_label: str,
+    models: list[str],
+    provider_for_model: Any,
+    scope_key_fn: Any,
+) -> dict[str, dict[str, float | int]]:
+    """Fetch rolling provider stats for multiple models concurrently."""
+    if not models:
+        return {}
+
+    async def _one(model: str) -> tuple[str, dict[str, float | int]]:
+        provider = provider_for_model(model)
+        stats = ProviderStats(redis, scope_key_fn(tenant_label, provider, model))
+        try:
+            payload = await stats.snapshot()
+        except Exception:
+            payload = dict(_DEFAULT_SNAPSHOT)
+        return model, payload
+
+    pairs = await asyncio.gather(*(_one(model) for model in models))
+    return dict(pairs)

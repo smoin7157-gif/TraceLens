@@ -10,7 +10,7 @@ from tracelens.optimize.routing import (
     provider_for_model,
 )
 from tracelens.pipeline.context import GatewayContext
-from tracelens.resilience.provider_stats import ProviderStats, stats_scope_key
+from tracelens.resilience.provider_stats import snapshot_models, stats_scope_key
 
 
 class RouterStage:
@@ -32,24 +32,20 @@ class RouterStage:
             }
             return
 
+        settings = get_settings()
         tenant_label = str(context.tenant_id or "unknown")
         requested = context.chat_request.model
         context.requested_model = requested
-        chain_models = get_settings().routing.fallback_chains.get(requested, [requested])
+        chain_models = settings.routing.fallback_chains.get(requested, [requested])
 
-        stats_by_model: dict[str, dict[str, float | int]] = {}
         redis = RedisClient.connection()
-        for model in chain_models:
-            provider = provider_for_model(model)
-            stats = ProviderStats(redis, stats_scope_key(tenant_label, provider, model))
-            try:
-                stats_by_model[model] = await stats.snapshot()
-            except Exception:
-                stats_by_model[model] = {
-                    "p95_latency_ms": 50.0,
-                    "error_rate": 0.0,
-                    "sample_count": 0,
-                }
+        stats_by_model = await snapshot_models(
+            redis,
+            tenant_label=tenant_label,
+            models=chain_models,
+            provider_for_model=provider_for_model,
+            scope_key_fn=stats_scope_key,
+        )
 
         quality_by_model: dict[str, float] = {}
         if context.tenant_id is not None:
