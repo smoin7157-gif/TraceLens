@@ -47,19 +47,10 @@ async def add_prompt_version(
     return entity
 
 
-async def compare_prompt_versions(
-    session: AsyncSession,
-    tenant_id: uuid.UUID,
-    prompt_id: uuid.UUID,
+def _version_metrics(
+    versions: list[PromptVersion],
+    eval_runs: list[EvalRun],
 ) -> list[dict[str, Any]]:
-    versions_stmt = select(PromptVersion).where(
-        PromptVersion.tenant_id == tenant_id,
-        PromptVersion.prompt_id == prompt_id,
-    )
-    versions = list((await session.execute(versions_stmt)).scalars().all())
-    runs_stmt = select(EvalRun).where(EvalRun.tenant_id == tenant_id)
-    eval_runs = list((await session.execute(runs_stmt)).scalars().all())
-
     rows: list[dict[str, Any]] = []
     for version in versions:
         scores = [
@@ -73,12 +64,71 @@ async def compare_prompt_versions(
                 "mean_score": sum(scores) / len(scores),
                 "eval_count": len(scores),
             }
-            version.metrics = metrics
         rows.append(
             {
                 "prompt_version_id": str(version.id),
                 "version": version.version,
                 "metrics": metrics,
+            }
+        )
+    return rows
+
+
+async def compare_prompt_versions(
+    session: AsyncSession,
+    tenant_id: uuid.UUID,
+    prompt_id: uuid.UUID,
+) -> list[dict[str, Any]]:
+    versions_stmt = select(PromptVersion).where(
+        PromptVersion.tenant_id == tenant_id,
+        PromptVersion.prompt_id == prompt_id,
+    )
+    versions = list((await session.execute(versions_stmt)).scalars().all())
+    runs_stmt = select(EvalRun).where(EvalRun.tenant_id == tenant_id)
+    eval_runs = list((await session.execute(runs_stmt)).scalars().all())
+    return _version_metrics(versions, eval_runs)
+
+
+async def compare_prompts_for_tenant(
+    session: AsyncSession,
+    tenant_id: uuid.UUID,
+) -> list[dict[str, Any]]:
+    prompts = list(
+        (await session.execute(select(Prompt).where(Prompt.tenant_id == tenant_id))).scalars().all()
+    )
+    if not prompts:
+        return []
+    prompt_ids = [prompt.id for prompt in prompts]
+    versions = list(
+        (
+            await session.execute(
+                select(PromptVersion).where(
+                    PromptVersion.tenant_id == tenant_id,
+                    PromptVersion.prompt_id.in_(prompt_ids),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    eval_runs = list(
+        (await session.execute(select(EvalRun).where(EvalRun.tenant_id == tenant_id)))
+        .scalars()
+        .all()
+    )
+    versions_by_prompt: dict[uuid.UUID, list[PromptVersion]] = {}
+    for version in versions:
+        versions_by_prompt.setdefault(version.prompt_id, []).append(version)
+
+    rows: list[dict[str, Any]] = []
+    for prompt in prompts:
+        prompt_versions = versions_by_prompt.get(prompt.id, [])
+        rows.append(
+            {
+                "id": str(prompt.id),
+                "name": prompt.name,
+                "slug": prompt.slug,
+                "versions": _version_metrics(prompt_versions, eval_runs),
             }
         )
     return rows
