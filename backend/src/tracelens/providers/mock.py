@@ -63,7 +63,7 @@ class MockProvider:
         completion_id: str | None = None,
     ) -> ChatCompletionResponse:
         latency_ms, error_rate, seed = _parse_mock_headers(http_request)
-        rng = random.Random(seed)
+        rng = random.Random(seed if seed is not None else request.model)
         effective_error_rate = _error_rate_for_model(http_request, request.model, error_rate)
 
         if latency_ms > 0:
