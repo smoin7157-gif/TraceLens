@@ -12,9 +12,12 @@ async def get_quality_scores(
     tenant_id: uuid.UUID,
     models: list[str],
 ) -> dict[str, float]:
+    if not models:
+        return {}
+    keys = [quality_score_key(tenant_id, model) for model in models]
+    values = await redis.mget(*keys)
     out: dict[str, float] = {}
-    for model in models:
-        raw = await redis.get(quality_score_key(tenant_id, model))
+    for model, raw in zip(models, values, strict=True):
         if raw is None:
             continue
         try:
