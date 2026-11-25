@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.gzip import GZipMiddleware
 
 from tracelens import __version__
 from tracelens.api import (
@@ -28,6 +29,8 @@ app = FastAPI(
     description="Self-hostable LLM gateway with observability and cost optimization",
     version=__version__,
 )
+
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 app.add_middleware(
     CORSMiddleware,
