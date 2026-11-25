@@ -29,7 +29,8 @@ async def run_shadow_call(
     http_request: Request,
     context: GatewayContext,
 ) -> dict[str, object] | None:
-    policy = get_settings().shadow
+    settings = get_settings()
+    policy = settings.shadow
     if not policy.enabled or context.chat_request is None:
         return None
     if not should_shadow(request_id=context.request_id, sample_rate=policy.sample_rate):
@@ -59,7 +60,8 @@ def schedule_shadow_call(
     http_request: Request,
     context: GatewayContext,
 ) -> None:
-    if not get_settings().shadow.enabled:
+    settings = get_settings()
+    if not settings.shadow.enabled:
         return
     if context.chat_request is None or context.chat_request.stream:
         return
