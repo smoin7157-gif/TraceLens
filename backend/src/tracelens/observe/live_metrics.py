@@ -11,13 +11,20 @@ def record_gateway_outcome(outcome: str) -> None:
 
 
 def snapshot(window_seconds: int = 60) -> dict[str, float]:
+    if not _ring:
+        return {"requests_per_second": 0.0, "success_rate": 1.0, "sample_count": 0.0}
     now = time.time()
     window_start = now - window_seconds
-    events = [(ts, outcome) for ts, outcome in _ring if ts >= window_start]
-    total = len(events)
+    total = 0
+    successes = 0
+    for ts, outcome in _ring:
+        if ts < window_start:
+            continue
+        total += 1
+        if outcome == "success":
+            successes += 1
     if total == 0:
         return {"requests_per_second": 0.0, "success_rate": 1.0, "sample_count": 0.0}
-    successes = sum(1 for _, outcome in events if outcome == "success")
     rps = total / float(window_seconds)
     success_rate = successes / total
     return {
@@ -28,7 +35,7 @@ def snapshot(window_seconds: int = 60) -> dict[str, float]:
 
 
 def snapshot_json(window_seconds: int = 60) -> str:
-    return json.dumps(snapshot(window_seconds))
+    return json.dumps(snapshot(window_seconds), separators=(",", ":"))
 
 
 @dataclass(frozen=True)
