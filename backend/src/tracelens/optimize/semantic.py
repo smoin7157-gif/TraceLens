@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import load_only
 
 from tracelens.config import get_settings
 from tracelens.db.models.semantic_cache import SemanticCacheEntry
@@ -36,6 +37,13 @@ class SemanticCache:
             .where(
                 SemanticCacheEntry.tenant_id == tenant_id,
                 SemanticCacheEntry.model == model,
+            )
+            .options(
+                load_only(
+                    SemanticCacheEntry.embedding,
+                    SemanticCacheEntry.response_payload,
+                    SemanticCacheEntry.expires_at,
+                )
             )
             .order_by(SemanticCacheEntry.created_at.desc())
             .limit(25)
