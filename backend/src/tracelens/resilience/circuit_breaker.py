@@ -39,11 +39,21 @@ class CircuitBreaker:
         return CircuitState(text)
 
     async def allow_request(self) -> bool:
-        state = await self.get_state()
+        async with self._redis.pipeline(transaction=False) as pipe:
+            pipe.get(self._state_key())
+            pipe.get(self._opened_at_key())
+            state_raw, opened_raw = await pipe.execute()
+
+        if state_raw is None:
+            return True
+        state_text = state_raw.decode() if isinstance(state_raw, bytes) else str(state_raw)
+        try:
+            state = CircuitState(state_text)
+        except ValueError:
+            return True
         if state == CircuitState.CLOSED:
             return True
         if state == CircuitState.OPEN:
-            opened_raw = await self._redis.get(self._opened_at_key())
             if opened_raw is None:
                 return False
             opened_at = float(opened_raw)
