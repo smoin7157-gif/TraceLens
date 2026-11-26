@@ -8,6 +8,7 @@ from fastapi import APIRouter, Header, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import load_only
 
 from tracelens.api.deps import AdminDep, SessionDep
 from tracelens.db.models.alert import Alert
@@ -74,6 +75,16 @@ async def dashboard_recent_cost(
     stmt = (
         select(RequestLog)
         .where(RequestLog.tenant_id == tenant_id)
+        .options(
+            load_only(
+                RequestLog.request_id,
+                RequestLog.model,
+                RequestLog.cache_status,
+                RequestLog.cost_actual,
+                RequestLog.cost_without_optimization,
+                RequestLog.created_at,
+            )
+        )
         .order_by(RequestLog.created_at.desc())
         .limit(limit)
     )
@@ -104,6 +115,14 @@ async def dashboard_list_traces(
     stmt = (
         select(Trace)
         .where(Trace.tenant_id == tenant_id)
+        .options(
+            load_only(
+                Trace.trace_id,
+                Trace.environment,
+                Trace.tags,
+                Trace.created_at,
+            )
+        )
         .order_by(Trace.created_at.desc())
         .limit(limit)
     )

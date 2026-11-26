@@ -52,9 +52,13 @@ class ApiKeyAuthRepository:
         self.session = session
 
     async def find_active_by_prefix(self, key_prefix: str) -> list[ApiKey]:
-        stmt = select(ApiKey).where(
-            ApiKey.key_prefix == key_prefix,
-            ApiKey.revoked_at.is_(None),
+        stmt = (
+            select(ApiKey)
+            .where(
+                ApiKey.key_prefix == key_prefix,
+                ApiKey.revoked_at.is_(None),
+            )
+            .limit(8)
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
