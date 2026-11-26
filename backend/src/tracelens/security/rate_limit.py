@@ -1,3 +1,4 @@
+import asyncio
 import time
 import uuid
 from uuid import UUID
@@ -50,22 +51,26 @@ async def check_rate_limits(
     limiter = SlidingWindowRateLimiter(redis)
 
     key_rl = rate_limit_key_for_api_key(tenant_id, key_id)
-    allowed, _ = await limiter.allow(
+    key_check = limiter.allow(
         key_rl,
         limit=policy.per_key_per_minute,
         window_seconds=policy.window_seconds,
     )
-    if not allowed:
-        return False, "API key rate limit exceeded"
-
     if client_ip:
         ip_rl = rate_limit_key_for_ip(tenant_id, client_ip)
-        allowed_ip, _ = await limiter.allow(
+        ip_check = limiter.allow(
             ip_rl,
             limit=policy.per_ip_per_minute,
             window_seconds=policy.window_seconds,
         )
+        (allowed_key, _), (allowed_ip, _) = await asyncio.gather(key_check, ip_check)
+        if not allowed_key:
+            return False, "API key rate limit exceeded"
         if not allowed_ip:
             return False, "IP rate limit exceeded"
+        return True, None
 
+    allowed, _ = await key_check
+    if not allowed:
+        return False, "API key rate limit exceeded"
     return True, None
