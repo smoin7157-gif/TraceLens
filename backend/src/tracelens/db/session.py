@@ -22,6 +22,7 @@ def get_engine() -> AsyncEngine:
     )
 
 
+@lru_cache
 def async_session_factory() -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(
         bind=get_engine(),
@@ -46,3 +47,4 @@ async def dispose_engine() -> None:
     engine = get_engine()
     await engine.dispose()
     get_engine.cache_clear()
+    async_session_factory.cache_clear()
