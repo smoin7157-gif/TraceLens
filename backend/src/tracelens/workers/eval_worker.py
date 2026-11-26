@@ -22,10 +22,12 @@ async def process_eval_queue_once() -> int:
     factory = async_session_factory()
     processed = 0
 
-    for _ in range(settings.worker_batch_size):
-        raw = await redis.rpop(settings.eval_queue_key)
-        if raw is None:
-            break
+    batch = await redis.rpop(settings.eval_queue_key, count=settings.worker_batch_size)
+    if not batch:
+        return 0
+    items = batch if isinstance(batch, list) else [batch]
+
+    for raw in items:
         raw_text = raw.decode() if isinstance(raw, bytes) else str(raw)
         try:
             payload = json.loads(raw_text)
