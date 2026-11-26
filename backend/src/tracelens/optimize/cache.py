@@ -9,8 +9,12 @@ from tracelens.providers.schemas import ChatCompletionResponse
 
 
 def cache_prompt_digest(messages: list[dict[str, str]], model: str) -> str:
-    payload = json.dumps({"model": model, "messages": messages}, sort_keys=True)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    payload = json.dumps(
+        {"model": model, "messages": messages},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
 def exact_cache_key(tenant_id: uuid.UUID, model: str, digest: str) -> str:
