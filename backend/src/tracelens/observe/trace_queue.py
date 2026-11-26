@@ -23,7 +23,10 @@ async def enqueue_trace(request: Request, context: GatewayContext) -> None:
     started = time.perf_counter()
     try:
         redis = RedisClient.connection()
-        await redis.lpush(settings.trace_queue_key, json.dumps(payload, default=str))
+        await redis.lpush(
+            settings.trace_queue_key,
+            json.dumps(payload, default=str, separators=(",", ":")),
+        )
         TRACE_ENQUEUE_TOTAL.labels(result="success").inc()
         context.metadata["trace_queue"] = settings.trace_queue_key
     except Exception:
