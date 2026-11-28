@@ -29,6 +29,8 @@ Dashboard:
 cd dashboard && npm install && npm run typecheck && npm run build
 ```
 
+Admin operational APIs (cache purge, trace DLQ) are documented in [`docs/admin-cache.md`](docs/admin-cache.md).
+
 ## Scope
 
 - Target **one concern per PR** when possible (matches phased `PLAN.md` history)
