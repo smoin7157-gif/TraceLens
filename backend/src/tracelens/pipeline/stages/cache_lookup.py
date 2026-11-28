@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracelens.db.redis_client import RedisClient
 from tracelens.gateway.errors import GatewayValidationError
+from tracelens.observe.metrics import CACHE_LOOKUP_TOTAL
 from tracelens.optimize.cache import ExactCache, cache_prompt_digest
 from tracelens.optimize.semantic import SemanticCache
 from tracelens.pipeline.context import GatewayContext
@@ -27,6 +28,7 @@ class CacheLookupStage:
         context.cache_bypass = bypass
         if bypass:
             context.cache_status = "bypass"
+            CACHE_LOOKUP_TOTAL.labels(kind="bypass").inc()
             return
 
         model = context.selected_model or context.chat_request.model
@@ -40,6 +42,7 @@ class CacheLookupStage:
         if hit is not None:
             context.cache_hit = True
             context.cache_status = "exact"
+            CACHE_LOOKUP_TOTAL.labels(kind="exact").inc()
             context.chat_response = hit.model_copy(update={"id": context.request_id or hit.id})
             context.tokens_out = hit.usage.completion_tokens
             await self._attach_stream_if_needed(request, context, hit)
@@ -51,6 +54,7 @@ class CacheLookupStage:
         if near is not None:
             context.cache_hit = True
             context.cache_status = "semantic"
+            CACHE_LOOKUP_TOTAL.labels(kind="semantic").inc()
             context.chat_response = near.model_copy(update={"id": context.request_id or near.id})
             context.tokens_out = near.usage.completion_tokens
             context.metadata["cache_similarity"] = score
@@ -60,6 +64,7 @@ class CacheLookupStage:
             return
 
         context.cache_status = "miss"
+        CACHE_LOOKUP_TOTAL.labels(kind="miss").inc()
         context.metadata["cache_digest"] = digest
 
     async def _attach_stream_if_needed(
