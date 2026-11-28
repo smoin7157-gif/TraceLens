@@ -25,6 +25,12 @@
 
 ## Session log
 
+### Platform hardening + Vercel dashboard — 2025-11-28
+
+**Goal:** SSRF-safe webhooks, semantic cache HNSW + upsert, admin cache/DLQ tools, Prometheus cache/DLQ counters, Vercel dashboard docs.
+
+**Built:** Migrations `009`–`010`, `security/webhooks`, admin cache/DLQ APIs, `docs/vercel.md`, dashboard `vercel.json`.
+
 ### Phase 14 — Differentiators, dogfooding, proof & docs — 2025-11-24
 
 **Goal (3 lines):**
