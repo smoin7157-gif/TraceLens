@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException, Query, status
+from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,7 @@ from sqlalchemy.orm import load_only
 
 from tracelens.api.deps import AdminDep, SessionDep
 from tracelens.db.models.alert import Alert
+from tracelens.db.models.dataset import Dataset
 from tracelens.db.models.experiment import Experiment
 from tracelens.db.models.prompt import Prompt, PromptVersion
 from tracelens.db.models.request_log import RequestLog
@@ -35,12 +36,18 @@ async def _require_tenant(session: AsyncSession, tenant_id: uuid.UUID) -> None:
 
 @router.get("/live")
 async def dashboard_live(
+    request: Request,
     interval_seconds: float = Query(default=1.0, ge=0.25, le=5.0),
 ) -> StreamingResponse:
     async def generator() -> AsyncIterator[str]:
-        while True:
-            yield f"data: {snapshot_json()}\n\n"
-            await asyncio.sleep(interval_seconds)
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                yield f"data: {snapshot_json()}\n\n"
+                await asyncio.sleep(interval_seconds)
+        except asyncio.CancelledError:
+            return
 
     return StreamingResponse(generator(), media_type="text/event-stream")
 
@@ -110,12 +117,14 @@ async def dashboard_list_traces(
     tenant_id: uuid.UUID,
     session: SessionDep,
     limit: int = Query(default=25, ge=1, le=100),
+    environment: str | None = Query(default=None),
 ) -> dict[str, Any]:
     await _require_tenant(session, tenant_id)
+    stmt = select(Trace).where(Trace.tenant_id == tenant_id)
+    if environment:
+        stmt = stmt.where(Trace.environment == environment)
     stmt = (
-        select(Trace)
-        .where(Trace.tenant_id == tenant_id)
-        .options(
+        stmt.options(
             load_only(
                 Trace.trace_id,
                 Trace.environment,
@@ -191,6 +200,27 @@ async def dashboard_prompts(
 ) -> dict[str, Any]:
     await _require_tenant(session, tenant_id)
     return {"data": await compare_prompts_for_tenant(session, tenant_id)}
+
+
+@router.get("/datasets")
+async def dashboard_datasets(
+    tenant_id: uuid.UUID,
+    session: SessionDep,
+) -> dict[str, Any]:
+    await _require_tenant(session, tenant_id)
+    stmt = select(Dataset).where(Dataset.tenant_id == tenant_id).order_by(Dataset.created_at.desc())
+    datasets = list((await session.execute(stmt)).scalars().all())
+    return {
+        "data": [
+            {
+                "id": str(row.id),
+                "name": row.name,
+                "description": row.description,
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in datasets
+        ]
+    }
 
 
 @router.get("/datasets/experiments")
