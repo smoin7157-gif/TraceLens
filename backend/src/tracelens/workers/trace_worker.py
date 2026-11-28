@@ -40,6 +40,8 @@ async def process_queue_once() -> int:
         except Exception:
             TRACE_WORKER_PROCESSED.labels(result="error").inc()
             logger.exception("trace_worker_persist_failed")
+            dlq_key = f"{settings.trace_queue_key}:dlq"
+            await redis.lpush(dlq_key, raw_text)
 
     return processed
 
