@@ -3,6 +3,7 @@ name = "tracelens"
 version = "0.1.0"
 description = "Self-hostable LLM gateway with observability and cost optimization"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",

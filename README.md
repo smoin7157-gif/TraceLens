@@ -139,7 +139,7 @@ Real traffic from **Hire AI** and **Interview OS** should populate [`RESULTS.md`
 
 ## License
 
-To be added. Open-source intent; license TBD before public release.
+[MIT](LICENSE)
 
 ## Contributing
 
