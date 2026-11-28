@@ -61,6 +61,10 @@ async def chat_completions(request: Request, session: SessionDep) -> Response:
                 code=exc.code,
                 error_type="rate_limit_error",
             ),
+            headers={
+                "Retry-After": "60",
+                "X-RateLimit-Policy": "sliding-window",
+            },
         )
     except GatewayBudgetError as exc:
         await persist_request_log(
