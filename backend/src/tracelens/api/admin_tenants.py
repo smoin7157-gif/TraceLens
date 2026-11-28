@@ -34,11 +34,24 @@ async def create_tenant(
     return TenantResponse(id=tenant.id, name=tenant.name, slug=tenant.slug)
 
 
+@router.get("/tenants/{tenant_id}", response_model=TenantResponse)
+async def get_tenant(
+    tenant_id: uuid.UUID,
+    _admin: AdminDep,
+    session: SessionDep,
+) -> TenantResponse:
+    tenant = await TenantRepository(session).get_by_id(tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    return TenantResponse(id=tenant.id, name=tenant.name, slug=tenant.slug)
+
+
 @router.get("/tenants", response_model=list[TenantResponse])
 async def list_tenants(
     _admin: AdminDep,
     session: SessionDep,
     limit: int = 100,
+    offset: int = 0,
 ) -> list[TenantResponse]:
-    tenants = await TenantRepository(session).list_recent(limit=limit)
+    tenants = await TenantRepository(session).list_recent(limit=limit, offset=offset)
     return [TenantResponse(id=t.id, name=t.name, slug=t.slug) for t in tenants]
