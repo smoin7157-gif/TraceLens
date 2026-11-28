@@ -24,6 +24,12 @@ TRACE_WORKER_PROCESSED = Counter(
     ["result"],
 )
 
+EVAL_WORKER_PROCESSED = Counter(
+    "tracelens_eval_worker_processed_total",
+    "Eval jobs processed by worker",
+    ["result"],
+)
+
 
 def metrics_response_body() -> tuple[bytes, str]:
     return generate_latest(), CONTENT_TYPE_LATEST

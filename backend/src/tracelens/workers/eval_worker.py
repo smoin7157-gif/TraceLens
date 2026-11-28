@@ -10,6 +10,7 @@ from tracelens.db.models.evaluator import EvalRun, Evaluator
 from tracelens.db.redis_client import RedisClient
 from tracelens.db.session import async_session_factory, dispose_engine
 from tracelens.observe.evaluators import evaluate_output
+from tracelens.observe.metrics import EVAL_WORKER_PROCESSED
 from tracelens.observe.prompts import refresh_prompt_version_metrics
 from tracelens.observe.quality_scores import set_quality_score
 
@@ -32,6 +33,8 @@ async def process_eval_queue_once() -> int:
         try:
             payload = json.loads(raw_text)
         except json.JSONDecodeError:
+            EVAL_WORKER_PROCESSED.labels(result="invalid_json").inc()
+            logger.warning("eval_worker_invalid_json")
             continue
 
         tenant_id = uuid.UUID(str(payload["tenant_id"]))
@@ -81,6 +84,7 @@ async def process_eval_queue_once() -> int:
                 )
 
             await session.commit()
+            EVAL_WORKER_PROCESSED.labels(result="success").inc()
             processed += 1
 
     return processed
