@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     )
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
     admin_api_token: str = Field(default="", alias="ADMIN_API_TOKEN")
+    metrics_scrape_token: str = Field(default="", alias="METRICS_SCRAPE_TOKEN")
+    dashboard_read_token: str = Field(default="", alias="DASHBOARD_READ_TOKEN")
+    cors_origins: str = Field(
+        default="http://localhost:3000,http://127.0.0.1:3000",
+        alias="CORS_ORIGINS",
+    )
     mock_default_latency_ms: float = Field(default=5.0, alias="MOCK_DEFAULT_LATENCY_MS")
     mock_default_error_rate: float = Field(default=0.0, alias="MOCK_DEFAULT_ERROR_RATE")
     pipeline: PipelineToggles = Field(default_factory=default_pipeline_toggles)
@@ -71,6 +77,10 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.app_env.lower() == "production"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [part.strip() for part in self.cors_origins.split(",") if part.strip()]
 
 
 @lru_cache
