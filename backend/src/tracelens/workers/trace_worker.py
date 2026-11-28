@@ -5,7 +5,7 @@ import logging
 from tracelens.config import get_settings
 from tracelens.db.redis_client import RedisClient
 from tracelens.db.session import async_session_factory, dispose_engine
-from tracelens.observe.metrics import TRACE_WORKER_PROCESSED
+from tracelens.observe.metrics import TRACE_DLQ_TOTAL, TRACE_WORKER_PROCESSED
 from tracelens.observe.persistence import persist_trace_payload
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,7 @@ async def process_queue_once() -> int:
             logger.exception("trace_worker_persist_failed")
             dlq_key = f"{settings.trace_queue_key}:dlq"
             await redis.lpush(dlq_key, raw_text)
+            TRACE_DLQ_TOTAL.inc()
 
     return processed
 
