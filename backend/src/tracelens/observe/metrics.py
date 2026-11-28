@@ -30,6 +30,17 @@ EVAL_WORKER_PROCESSED = Counter(
     ["result"],
 )
 
+CACHE_LOOKUP_TOTAL = Counter(
+    "tracelens_cache_lookup_total",
+    "Gateway cache lookup outcomes",
+    ["kind"],
+)
+
+TRACE_DLQ_TOTAL = Counter(
+    "tracelens_trace_dlq_total",
+    "Trace payloads moved to DLQ after worker failures",
+)
+
 
 def metrics_response_body() -> tuple[bytes, str]:
     return generate_latest(), CONTENT_TYPE_LATEST
