@@ -26,7 +26,7 @@ class TenantRepository:
         result = await self.session.execute(select(Tenant).where(Tenant.slug == slug))
         return result.scalar_one_or_none()
 
-    async def list_recent(self, *, limit: int = 100) -> list[Tenant]:
-        stmt = select(Tenant).order_by(Tenant.created_at.desc()).limit(limit)
+    async def list_recent(self, *, limit: int = 100, offset: int = 0) -> list[Tenant]:
+        stmt = select(Tenant).order_by(Tenant.created_at.desc()).offset(offset).limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
