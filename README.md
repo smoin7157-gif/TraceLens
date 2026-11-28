@@ -121,6 +121,10 @@ npm run dev
 # Set NEXT_PUBLIC_TRACELENS_API_URL=http://localhost:8000
 ```
 
+### Dashboard on Vercel
+
+Host only the `dashboard/` app on Vercel; run the API and data plane separately. See [`docs/vercel.md`](docs/vercel.md).
+
 ## Repository layout
 
 ```
