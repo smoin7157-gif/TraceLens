@@ -8,6 +8,7 @@ from tracelens.api.deps import AdminDep, SessionDep
 from tracelens.db.repositories.api_key import ApiKeyRepository
 from tracelens.db.repositories.budget import BudgetRepository
 from tracelens.db.repositories.tenant import TenantRepository
+from tracelens.security.webhooks import UnsafeWebhookError, validate_webhook_url
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -51,13 +52,19 @@ async def create_budget(
     if tenant is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
 
+    webhook_url = body.webhook_url
+    if webhook_url:
+        try:
+            webhook_url = validate_webhook_url(webhook_url)
+        except UnsafeWebhookError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
     record = await BudgetRepository(session, tenant_id).create(
         name=body.name,
         daily_tokens=body.daily_tokens,
         monthly_tokens=body.monthly_tokens,
         daily_usd=body.daily_usd,
         monthly_usd=body.monthly_usd,
-        webhook_url=body.webhook_url,
+        webhook_url=webhook_url,
     )
     return BudgetResponse(
         id=record.id,
