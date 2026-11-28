@@ -12,3 +12,5 @@ async def test_metrics_endpoint_exposes_counters() -> None:
     assert response.status_code == 200
     body = response.text
     assert "tracelens_trace_enqueue_total" in body
+    assert "tracelens_cache_lookup_total" in body
+    assert "tracelens_trace_dlq_total" in body
