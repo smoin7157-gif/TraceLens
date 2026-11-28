@@ -23,6 +23,10 @@ def main() -> int:
     with httpx.Client(base_url=args.base_url, timeout=30.0) as client:
         health = client.get("/health")
         health.raise_for_status()
+        ready = client.get("/health/ready", timeout=30.0)
+        if ready.status_code != 200:
+            print("API not ready:", ready.text, file=sys.stderr)
+            return 1
         response = client.post(
             "/dashboard/demo/seed",
             headers={"X-Admin-Token": args.admin_token},
