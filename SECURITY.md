@@ -25,3 +25,4 @@ We aim to acknowledge reports within 72 hours.
 - Set `DASHBOARD_READ_TOKEN` if the dashboard BFF is exposed beyond localhost
 - Use TLS at the edge; restrict Postgres/Redis to private networks
 - Keep `MOCK` providers disabled in production (`APP_ENV=production`)
+- Alert and budget webhooks are validated against SSRF (no localhost, link-local, or metadata IPs); use HTTPS endpoints you control
