@@ -149,7 +149,13 @@ class BudgetCounterService:
             }
             url = budget.webhook_url
             if url:
-                asyncio.create_task(_post_webhook(url, payload))
+                try:
+                    from tracelens.security.webhooks import UnsafeWebhookError, validate_webhook_url
+
+                    safe_url = validate_webhook_url(url)
+                except UnsafeWebhookError:
+                    continue
+                asyncio.create_task(_post_webhook(safe_url, payload))
 
 
 async def _post_webhook(url: str, payload: dict[str, object]) -> None:
