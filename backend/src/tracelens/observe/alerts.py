@@ -5,6 +5,7 @@ import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracelens.db.models.alert import Alert, AlertEvent
+from tracelens.security.webhooks import UnsafeWebhookError, validate_webhook_url
 
 
 async def create_alert(
@@ -16,12 +17,16 @@ async def create_alert(
     threshold: float,
     webhook_url: str,
 ) -> Alert:
+    try:
+        safe_url = validate_webhook_url(webhook_url)
+    except UnsafeWebhookError as exc:
+        raise ValueError(str(exc)) from exc
     alert = Alert(
         tenant_id=tenant_id,
         name=name,
         metric=metric,
         threshold=threshold,
-        webhook_url=webhook_url,
+        webhook_url=safe_url,
     )
     session.add(alert)
     await session.flush()
