@@ -1,7 +1,8 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import load_only
 
@@ -32,11 +33,18 @@ class SemanticCache:
         query_vec = await self._backend.embed(prompt)
         threshold = self._settings.semantic_similarity_threshold
 
+        now = datetime.now(UTC)
+        not_expired = or_(
+            SemanticCacheEntry.expires_at.is_(None),
+            SemanticCacheEntry.expires_at > now,
+        )
+        distance = SemanticCacheEntry.embedding.cosine_distance(query_vec)
         stmt = (
-            select(SemanticCacheEntry)
+            select(SemanticCacheEntry, distance.label("distance"))
             .where(
                 SemanticCacheEntry.tenant_id == tenant_id,
                 SemanticCacheEntry.model == model,
+                not_expired,
             )
             .options(
                 load_only(
@@ -45,26 +53,18 @@ class SemanticCache:
                     SemanticCacheEntry.expires_at,
                 )
             )
-            .order_by(SemanticCacheEntry.created_at.desc())
-            .limit(25)
+            .order_by(distance)
+            .limit(5)
         )
         result = await self._session.execute(stmt)
-        entries = list(result.scalars().all())
-        now = datetime.now(UTC)
-        best_score = -1.0
-        best: SemanticCacheEntry | None = None
-        for entry in entries:
-            if entry.expires_at is not None and entry.expires_at < now:
-                continue
-            score = cosine_similarity(query_vec, entry.embedding)
-            if score > best_score:
-                best_score = score
-                best = entry
-
-        if best is None or best_score < threshold:
-            return None, best_score if best_score >= 0 else None
-
-        response = ChatCompletionResponse.model_validate(best.response_payload)
+        rows = list(result.all())
+        if not rows:
+            return None, None
+        best_entry, _ = rows[0]
+        best_score = cosine_similarity(query_vec, best_entry.embedding)
+        if best_score < threshold:
+            return None, best_score
+        response = ChatCompletionResponse.model_validate(best_entry.response_payload)
         return response, best_score
 
     async def store(
@@ -78,14 +78,27 @@ class SemanticCache:
         prompt = prompt_plaintext(messages)
         vector = await self._backend.embed(prompt)
         expires = datetime.now(UTC) + timedelta(seconds=self._settings.semantic_ttl_seconds)
-        entry = SemanticCacheEntry(
-            tenant_id=tenant_id,
-            model=model,
-            request_hash=request_hash,
-            prompt_text=prompt[:4000],
-            embedding=vector,
-            response_payload=response.model_dump(),
-            expires_at=expires,
+        payload = response.model_dump()
+        stmt = (
+            insert(SemanticCacheEntry)
+            .values(
+                tenant_id=tenant_id,
+                model=model,
+                request_hash=request_hash,
+                prompt_text=prompt[:4000],
+                embedding=vector,
+                response_payload=payload,
+                expires_at=expires,
+            )
+            .on_conflict_do_update(
+                index_elements=["tenant_id", "model", "request_hash"],
+                set_={
+                    "prompt_text": prompt[:4000],
+                    "embedding": vector,
+                    "response_payload": payload,
+                    "expires_at": expires,
+                },
+            )
         )
-        self._session.add(entry)
+        await self._session.execute(stmt)
         await self._session.flush()
