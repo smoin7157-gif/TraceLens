@@ -42,6 +42,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://tracelens:tracelens@postgres:5432/tracelens
       REDIS_URL: redis://redis:6379/0
       TRACELENS_CONFIG_OVERLAY_PATH: /config/overlay.yaml
+      # When hosting dashboard on Vercel, add its origin here (comma-separated).
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     volumes:
       - ./config/overlay.yaml:/config/overlay.yaml:ro
     healthcheck:
