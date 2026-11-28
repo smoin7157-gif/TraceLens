@@ -95,3 +95,28 @@ async def attach_budget_to_key(
 
     key.budget_id = body.budget_id
     await session.flush()
+
+
+@router.get("/tenants/{tenant_id}/budgets", response_model=list[BudgetResponse])
+async def list_budgets(
+    tenant_id: uuid.UUID,
+    _admin: AdminDep,
+    session: SessionDep,
+) -> list[BudgetResponse]:
+    tenant = await TenantRepository(session).get_by_id(tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    rows = await BudgetRepository(session, tenant_id).list_all()
+    return [
+        BudgetResponse(
+            id=row.id,
+            tenant_id=row.tenant_id,
+            name=row.name,
+            daily_tokens=row.daily_tokens,
+            monthly_tokens=row.monthly_tokens,
+            daily_usd=row.daily_usd,
+            monthly_usd=row.monthly_usd,
+            webhook_url=row.webhook_url,
+        )
+        for row in rows
+    ]
