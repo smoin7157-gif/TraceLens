@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from tracelens.api.deps import AdminDep, SessionDep
 from tracelens.db.models.alert import Alert
+from tracelens.db.models.experiment import Experiment
 from tracelens.db.models.evaluator import Evaluator
 from tracelens.db.models.prompt import Prompt
 from tracelens.db.repositories.tenant import TenantRepository
@@ -174,6 +175,27 @@ async def admin_create_experiment(
     return {"id": str(exp.id), "status": exp.status}
 
 
+@router.get("/tenants/{tenant_id}/experiments/{experiment_id}")
+async def admin_get_experiment(
+    tenant_id: uuid.UUID,
+    experiment_id: uuid.UUID,
+    _admin: AdminDep,
+    session: SessionDep,
+) -> dict[str, object]:
+    await _require_tenant(session, tenant_id)
+    exp = await session.get(Experiment, experiment_id)
+    if exp is None or exp.tenant_id != tenant_id:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    return {
+        "id": str(exp.id),
+        "name": exp.name,
+        "status": exp.status,
+        "dataset_id": str(exp.dataset_id),
+        "config": exp.config,
+        "results": exp.results,
+    }
+
+
 @router.post("/tenants/{tenant_id}/experiments/{experiment_id}/run")
 async def admin_run_experiment(
     tenant_id: uuid.UUID,
@@ -240,14 +262,17 @@ async def admin_create_alert(
     session: SessionDep,
 ) -> dict[str, str]:
     await _require_tenant(session, tenant_id)
-    alert = await create_alert(
-        session,
-        tenant_id,
-        name=body.name,
-        metric=body.metric,
-        threshold=body.threshold,
-        webhook_url=body.webhook_url,
-    )
+    try:
+        alert = await create_alert(
+            session,
+            tenant_id,
+            name=body.name,
+            metric=body.metric,
+            threshold=body.threshold,
+            webhook_url=body.webhook_url,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"id": str(alert.id)}
 
 
