@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -11,7 +11,15 @@ from tracelens.db.base import Base, PrimaryKeyMixin, TimestampMixin
 
 class SemanticCacheEntry(Base, PrimaryKeyMixin, TimestampMixin):
     __tablename__ = "semantic_cache_index"
-    __table_args__ = (Index("ix_semantic_cache_tenant_model", "tenant_id", "model"),)
+    __table_args__ = (
+        Index("ix_semantic_cache_tenant_model", "tenant_id", "model"),
+        UniqueConstraint(
+            "tenant_id",
+            "model",
+            "request_hash",
+            name="uq_semantic_cache_tenant_model_hash",
+        ),
+    )
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
