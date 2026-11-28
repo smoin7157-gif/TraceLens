@@ -1,6 +1,6 @@
 # TraceLens Architecture
 
-TraceLens is a **single FastAPI monolith** plus **async workers** (trace + eval) and a **Next.js dashboard**. One OpenAI-compatible gateway path runs a **ordered pipeline**; observability data lands in Postgres and Redis.
+TraceLens is a **single FastAPI monolith** plus **async workers** (trace + eval) and a **Next.js dashboard** (deployable to Vercel against a remote API). One OpenAI-compatible gateway path runs a **ordered pipeline**; observability data lands in Postgres and Redis. Admin APIs cover cache purge and trace DLQ recovery (`docs/admin-cache.md`).
 
 ## Request path
 
