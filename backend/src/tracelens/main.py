@@ -9,7 +9,9 @@ from starlette.middleware.gzip import GZipMiddleware
 from tracelens import __version__
 from tracelens.api import (
     admin_budgets,
+    admin_cache,
     admin_config,
+    admin_dlq,
     admin_keys,
     admin_observe,
     admin_replay,
@@ -59,6 +61,8 @@ app.include_router(admin_budgets.router)
 app.include_router(admin_observe.router)
 app.include_router(admin_config.router)
 app.include_router(admin_replay.router)
+app.include_router(admin_cache.router)
+app.include_router(admin_dlq.router)
 app.include_router(gateway_probe.router)
 app.include_router(health_ready.router)
 app.include_router(chat.router)
