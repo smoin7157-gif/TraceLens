@@ -1,5 +1,7 @@
 # TraceLens
 
+**Live dashboard (Vercel):** [https://trace-lens-rose.vercel.app](https://trace-lens-rose.vercel.app)
+
 **TraceLens** is an open-source, self-hostable LLM platform that combines:
 
 1. **Observe & evaluate** — request tracing, span trees, prompt versioning, datasets, evaluators, experiments, feedback, and dashboards (LangSmith / Helicone–class tooling).

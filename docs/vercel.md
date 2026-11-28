@@ -10,6 +10,8 @@ The TraceLens **API** (FastAPI, Postgres, Redis, workers) should run on Docker, 
 
 Use the Vercel Git integration with `smoin7157-gif/TraceLens` or import the same repo manually.
 
+**Production dashboard:** [https://trace-lens-rose.vercel.app](https://trace-lens-rose.vercel.app) (also set as the [GitHub repository website](https://github.com/smoin7157-gif/TraceLens)).
+
 ## 2. Environment variables
 
 | Variable | Required | Description |
@@ -24,7 +26,7 @@ Set these in **Project → Settings → Environment Variables** for Production a
 Add your Vercel hostname to `CORS_ORIGINS` on the API, for example:
 
 ```text
-https://tracelens-dashboard.vercel.app
+https://trace-lens-rose.vercel.app
 ```
 
 ## 4. What is not on Vercel

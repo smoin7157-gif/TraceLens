@@ -2,6 +2,8 @@
 
 Next.js 14 App Router UI for traces, economics, providers, and datasets.
 
+**Production:** [https://trace-lens-rose.vercel.app](https://trace-lens-rose.vercel.app)
+
 ## Local
 
 ```bash
